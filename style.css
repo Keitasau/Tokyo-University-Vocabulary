@@ -15,13 +15,16 @@
   --warn: #f3a83b;
   --radius: 24px;
   --shadow: 0 18px 50px rgba(0,0,0,0.28);
+  --bottom-nav-space: calc(132px + env(safe-area-inset-bottom));
 }
+
 
 * { box-sizing: border-box; }
 html { min-height: 100%; }
 body {
   margin: 0;
   min-height: 100dvh;
+  overflow-x: hidden;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
   color: var(--text);
   background:
@@ -51,8 +54,13 @@ button:disabled { cursor: not-allowed; opacity: 0.75; }
   width: min(100%, 480px);
   min-height: 100dvh;
   margin: 0 auto;
-  padding: max(14px, env(safe-area-inset-top)) 14px calc(92px + env(safe-area-inset-bottom));
+  padding: max(14px, env(safe-area-inset-top)) 14px var(--bottom-nav-space);
 }
+
+#app {
+  padding-bottom: 26px;
+}
+
 
 .topbar {
   display: flex;
@@ -90,7 +98,7 @@ h3 { font-size: 1.12rem; }
 }
 
 .shark-face { font-size: 1.3rem; }
-.screen { display: grid; gap: 14px; animation: rise 0.25s ease both; }
+.screen { display: grid; gap: 14px; animation: rise 0.25s ease both; scroll-margin-bottom: var(--bottom-nav-space); }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 .panel {
@@ -139,7 +147,7 @@ h3 { font-size: 1.12rem; }
 }
 .progress-fill, .oxygen-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.25s ease; }
 
-.btn-row { display: grid; gap: 10px; margin-top: 14px; }
+.btn-row { display: grid; gap: 10px; margin-top: 14px; padding-bottom: 4px; }
 .btn, .choice, .primary-button, .secondary-button {
   min-height: 48px;
   border: 0;
@@ -189,8 +197,10 @@ h3 { font-size: 1.12rem; }
 .tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; background: rgba(6, 58, 83, 0.08); color: rgba(7,51,72,0.72); font-size: 0.74rem; font-weight: 700; }
 
 .map-grid { display: grid; gap: 10px; }
-.map-node { padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.10); border: 1px solid rgba(141,239,255,0.18); }
+.map-node { padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.10); border: 1px solid rgba(141,239,255,0.18); color: var(--text); text-align: left; }
 .map-node.done { background: rgba(57,216,216,0.20); }
+.map-node.active { outline: 2px solid rgba(141,239,255,0.42); }
+.map-node.locked { opacity: 0.52; filter: grayscale(0.25); }
 
 .weak-word-list { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 10px; }
 .weak-word-item { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px; border-radius: 18px; background: rgba(255,255,255,0.10); border: 1px solid rgba(141,239,255,0.18); }
@@ -234,4 +244,25 @@ h3 { font-size: 1.12rem; }
 @media (min-width: 700px) {
   .app-shell { padding-top: 24px; }
   h1 { font-size: 1.35rem; }
+}
+
+
+/* Safe bottom space for quiz/result buttons on mobile browsers */
+.card:last-child,
+.panel:last-child,
+.result-card {
+  margin-bottom: 10px;
+}
+
+@supports (height: 100svh) {
+  body { min-height: 100svh; }
+  .app-shell { min-height: 100svh; }
+}
+
+@media (max-width: 600px) {
+  :root { --bottom-nav-space: calc(148px + env(safe-area-inset-bottom)); }
+  .app-shell { padding-bottom: var(--bottom-nav-space); }
+  #app { padding-bottom: 34px; }
+  .card { padding: 20px; }
+  .btn, .choice, .primary-button, .secondary-button { min-height: 50px; }
 }

@@ -1,7 +1,9 @@
 'use strict';
 
-const STORAGE_KEY = 'avna_learning_loop_v5';
-const WEAK_WORDS_STORAGE_KEY = 'weakWords';
+const STORAGE_KEY = 'todaiVocabulary.progress.v1';
+const LEGACY_STORAGE_KEY = 'avna_learning_loop_v5';
+const WEAK_WORDS_STORAGE_KEY = 'todaiVocabulary.weakWords.v1';
+const LEGACY_WEAK_WORDS_STORAGE_KEY = 'weakWords';
 const app = document.getElementById('app');
 const levelLabel = document.getElementById('levelLabel');
 
@@ -395,20 +397,36 @@ function normalizeData(raw) {
 }
 
 function loadState() {
+  const base = defaultState();
   try {
-    const base = defaultState();
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const savedRaw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const saved = savedRaw ? JSON.parse(savedRaw) : null;
     if (!saved) return base;
     return {
       ...base,
       ...saved,
+      currentDay: Number(saved.currentDay || base.currentDay),
       clearedDays: { ...base.clearedDays, ...(saved.clearedDays || {}) },
-      dayProgress: { ...base.dayProgress, ...(saved.dayProgress || {}) },
+      dayProgress: normalizeSavedDayProgress(saved.dayProgress || {}),
       settings: { ...base.settings, ...(saved.settings || {}) }
     };
   } catch (_) {
-    return defaultState();
+    return base;
   }
+}
+
+function normalizeSavedDayProgress(savedProgress) {
+  const normalized = {};
+  Object.entries(savedProgress || {}).forEach(([key, value]) => {
+    const base = defaultDayProgress();
+    normalized[key] = {
+      ...base,
+      ...(value || {}),
+      stats: { ...base.stats, ...((value || {}).stats || {}) },
+      completedSections: { ...base.completedSections, ...((value || {}).completedSections || {}) }
+    };
+  });
+  return normalized;
 }
 
 function saveState() {
@@ -438,20 +456,54 @@ function getDayProgress(unitId = state.currentUnitId, dayNumber = state.currentD
 }
 
 function ensureCurrentDayExists() {
-  const unit = getCurrentUnit();
-  if (!unit) return;
-  state.currentUnitId = unit.unitId;
-  if (!unit.days.some(day => Number(day.day) === Number(state.currentDay))) state.currentDay = unit.days[0]?.day || 1;
-}
-function getNextDayInfo() {
   const days = getAllDays();
-  const nowIndex = days.findIndex(item => item.unit.unitId === state.currentUnitId && Number(item.day.day) === Number(state.currentDay));
+  if (!days.length) return;
+  const exists = days.some(item => item.unit.unitId === state.currentUnitId && Number(item.day.day) === Number(state.currentDay));
+  if (!exists) {
+    const firstOpen = getFirstUnclearedDayInfo() || days[0];
+    state.currentUnitId = firstOpen.unit.unitId;
+    state.currentDay = Number(firstOpen.day.day);
+    return;
+  }
+  if (!isDayUnlocked(state.currentUnitId, state.currentDay)) {
+    const firstOpen = getFirstUnclearedDayInfo() || days[0];
+    state.currentUnitId = firstOpen.unit.unitId;
+    state.currentDay = Number(firstOpen.day.day);
+  }
+}
+function getDayIndex(unitId, dayNumber) {
+  return getAllDays().findIndex(item => item.unit.unitId === unitId && Number(item.day.day) === Number(dayNumber));
+}
+function getNextDayInfo(unitId = state.currentUnitId, dayNumber = state.currentDay) {
+  const days = getAllDays();
+  const nowIndex = getDayIndex(unitId, dayNumber);
   return days[nowIndex + 1] || null;
 }
+function getPreviousDayInfo(unitId = state.currentUnitId, dayNumber = state.currentDay) {
+  const days = getAllDays();
+  const nowIndex = getDayIndex(unitId, dayNumber);
+  return days[nowIndex - 1] || null;
+}
+function getFirstUnclearedDayInfo() {
+  return getAllDays().find(({ unit, day }) => !isDayCleared(unit.unitId, day.day)) || getAllDays()[0] || null;
+}
 function isDayCleared(unitId = state.currentUnitId, dayNumber = state.currentDay) { return Boolean(state.clearedDays[makeDayKey(unitId, dayNumber)]); }
+function isDayUnlocked(unitId = state.currentUnitId, dayNumber = state.currentDay) {
+  const index = getDayIndex(unitId, dayNumber);
+  if (index <= 0) return true;
+  const previous = getPreviousDayInfo(unitId, dayNumber);
+  return previous ? isDayCleared(previous.unit.unitId, previous.day.day) : true;
+}
+function isSectionComplete(sectionName, unitId = state.currentUnitId, dayNumber = state.currentDay) {
+  return Boolean(getDayProgress(unitId, dayNumber).completedSections[sectionName]);
+}
+function isLearningDayComplete(unitId = state.currentUnitId, dayNumber = state.currentDay) {
+  const completed = getDayProgress(unitId, dayNumber).completedSections;
+  return Boolean(completed.cards && completed.meaning && completed.audio);
+}
 function sectionProgress(unitId = state.currentUnitId, dayNumber = state.currentDay) {
-  const progress = getDayProgress(unitId, dayNumber);
-  const done = Object.values(progress.completedSections).filter(Boolean).length;
+  const completed = getDayProgress(unitId, dayNumber).completedSections;
+  const done = ['cards', 'meaning', 'audio'].filter(key => completed[key]).length;
   return Math.round((done / SECTION_COUNT) * 100);
 }
 function calculateLevel(exp = state.exp) { return Math.max(1, Math.floor(exp / 40) + 1); }
@@ -480,7 +532,9 @@ function setActiveNav(nav) {
 function resetState() {
   if (!confirm('この端末の学習進捗とWeak Wordsをリセットしますか？')) return;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   localStorage.removeItem(WEAK_WORDS_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_WEAK_WORDS_STORAGE_KEY);
   state = defaultState();
   ensureCurrentDayExists();
   saveState();
@@ -511,9 +565,9 @@ function renderHome() {
       <h3>今日の学習ループ</h3>
       <p class="small-note">Cards → 英→日4択 → Listening Quiz の順に進めます。間違えた語はWeak Wordsに自動保存されます。</p>
       <div class="btn-row">
-        <button class="btn" type="button" id="startCardsBtn">カード学習を始める</button>
-        <button class="btn ghost" type="button" id="startMeaningBtn">英→日4択</button>
-        <button class="btn ghost" type="button" id="startAudioBtn">Listening Quiz</button>
+        <button class="btn" type="button" id="startCardsBtn">${isSectionComplete('cards') ? '✅ ' : ''}カード学習を始める</button>
+        <button class="btn ghost" type="button" id="startMeaningBtn">${isSectionComplete('meaning') ? '✅ ' : ''}英→日4択</button>
+        <button class="btn ghost" type="button" id="startAudioBtn">${isSectionComplete('audio') ? '✅ ' : ''}Listening Quiz</button>
         <button class="btn ghost" type="button" id="weakHomeBtn">Weak Wordsを見る</button>
       </div>
     </section>
@@ -537,8 +591,9 @@ function renderMap() {
       ${items.map(({unit, day}) => {
         const done = isDayCleared(unit.unitId, day.day);
         const active = unit.unitId === state.currentUnitId && Number(day.day) === Number(state.currentDay);
-        return `<button class="map-node ${done ? 'done' : ''}" type="button" data-unit="${escapeAttr(unit.unitId)}" data-day="${escapeAttr(day.day)}">
-          <strong>${done ? '✅' : active ? '🫧' : '🌊'} Day ${escapeHTML(day.day)}</strong><br>
+        const unlocked = isDayUnlocked(unit.unitId, day.day);
+        return `<button class="map-node ${done ? 'done' : ''} ${active ? 'active' : ''} ${!unlocked ? 'locked' : ''}" type="button" data-unit="${escapeAttr(unit.unitId)}" data-day="${escapeAttr(day.day)}" ${!unlocked ? 'disabled' : ''}>
+          <strong>${done ? '✅' : active ? '🫧' : unlocked ? '🌊' : '🔒'} Day ${escapeHTML(day.day)}</strong><br>
           <span class="muted">${escapeHTML(day.title || unit.seaName || unit.unitTitle)}</span>
         </button>`;
       }).join('')}
@@ -740,35 +795,44 @@ function nextQuiz() {
 }
 
 function completeQuizSection() {
-  const progress = getDayProgress();
+  const completedUnitId = state.currentUnitId;
+  const completedDayNumber = state.currentDay;
+  const completedDay = getDay(completedUnitId, completedDayNumber);
+  const progress = getDayProgress(completedUnitId, completedDayNumber);
   progress.completedSections[quizType === 'audio' ? 'audio' : 'meaning'] = true;
+
+  let dayJustCleared = false;
+  let nextInfo = getNextDayInfo(completedUnitId, completedDayNumber);
+  if (isLearningDayComplete(completedUnitId, completedDayNumber) && !isDayCleared(completedUnitId, completedDayNumber)) {
+    dayJustCleared = clearDay(completedUnitId, completedDayNumber);
+    nextInfo = getNextDayInfo(completedUnitId, completedDayNumber);
+    if (nextInfo) {
+      state.currentUnitId = nextInfo.unit.unitId;
+      state.currentDay = Number(nextInfo.day.day);
+    }
+  }
   saveState();
-  const complete = Object.values(progress.completedSections).every(Boolean);
-  if (complete && !isDayCleared()) clearCurrentDay();
-  renderQuizResult();
+  renderQuizResult({ completedDay, completedDayNumber, dayJustCleared, nextInfo });
 }
 
-function clearCurrentDay() {
-  const day = getDay();
-  const key = makeDayKey();
+function clearDay(unitId, dayNumber) {
+  const day = getDay(unitId, dayNumber);
+  const key = makeDayKey(unitId, dayNumber);
+  if (state.clearedDays[key]) return false;
   state.clearedDays[key] = true;
   state.exp += Number(day.rewards?.exp || 20);
   state.pearls += Number(day.rewards?.pearls || 3);
-  const next = getNextDayInfo();
-  if (next) {
-    state.currentUnitId = next.unit.unitId;
-    state.currentDay = next.day.day;
-  }
-  saveState();
+  return true;
 }
 
-function renderQuizResult() {
-  const progress = getDayProgress();
+function renderQuizResult(context = {}) {
   const weakCount = Object.keys(loadWeakWords()).length;
+  const nextDayLabel = context.nextInfo ? `次は Day ${escapeHTML(context.nextInfo.day.day)} へ進めます。` : '登録済みのDayはすべて完了しました。';
   app.innerHTML = `
-    <section class="card center">
+    <section class="card center result-card">
       <h2>${quizType === 'audio' ? 'Listening Complete' : 'Meaning Quiz Complete'}</h2>
-      <p class="jp-large">今日の学習が一歩進みました。</p>
+      <p class="jp-large">${context.dayJustCleared ? `Day ${escapeHTML(context.completedDayNumber)} CLEAR!` : '今日の学習が一歩進みました。'}</p>
+      <p class="small-note">${context.dayJustCleared ? nextDayLabel : 'Cards・英→日4択・Listening Quizがそろうと次のDayが解放されます。'}</p>
       <p class="small-note">Weak Words：${weakCount}語。間違えた語はWeak Words Reviewで回収できます。</p>
       <div class="btn-row">
         <button class="btn" type="button" id="resultHomeBtn">Homeへ</button>
@@ -802,8 +866,12 @@ function updateTimerUI() {
 }
 
 function loadWeakWords() {
-  try { return JSON.parse(localStorage.getItem(WEAK_WORDS_STORAGE_KEY)) || {}; }
-  catch (_) { return {}; }
+  try {
+    const savedRaw = localStorage.getItem(WEAK_WORDS_STORAGE_KEY) || localStorage.getItem(LEGACY_WEAK_WORDS_STORAGE_KEY);
+    return savedRaw ? JSON.parse(savedRaw) || {} : {};
+  } catch (_) {
+    return {};
+  }
 }
 function saveWeakWords(weakWords) { localStorage.setItem(WEAK_WORDS_STORAGE_KEY, JSON.stringify(weakWords)); }
 function addWeakWord(wordItem) {
