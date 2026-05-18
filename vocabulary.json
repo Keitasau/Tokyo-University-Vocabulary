@@ -3,311 +3,122 @@
     "schemaVersion": 2,
     "courseId": "todai-avna",
     "series": "東京大学編",
-    "title": "Academic Vocabulary Network Adventure 東京大学編",
-    "description": "東大型抽象思考・音声から意味への即時想起・概念ネットワーク理解を育てる軽量MVP。"
+    "title": "Academic Vocabulary Network Adventure 東京大学編"
   },
   "units": [
     {
       "unitId": "u01",
       "unitTitle": "Perception",
       "seaName": "Perception Sea",
-      "unitQuestion": "Do we see reality itself?",
       "days": [
         {
           "day": 1,
           "title": "Do we see reality itself?",
-          "mission": "5語を学び、音・意味・概念をつなげてPerception Seaの入口を解放しよう。",
-          "clearTitle": "🌊 Sea Area Cleared!",
-          "clearMessage": "Perception Seaの入口を解放しました。見たものをそのまま信じるのではなく、認識のしくみに気づく力が育ちました。",
-          "rewards": {
-            "pearls": 3,
-            "exp": 20
-          },
+          "mission": "音・意味・概念をつなぎ、Perception Seaの入口を解放しよう。",
+          "clearTitle": "Sea Area Cleared!",
+          "clearMessage": "Perception Seaの入口を解放しました。",
+          "rewards": { "pearls": 3, "exp": 20 },
+          "mapNodes": ["perception", "representation", "framework", "assumption", "interpretation", "perspective", "cognition", "evidence"],
           "words": [
             {
               "id": "u01_d01_w01",
               "word": "perception",
-              "jp": "知覚／認識／ものの見方",
+              "jp": "知覚／認識",
               "coreImage": "外界の情報を、脳が意味ある世界として理解する働き。",
-              "root": "per = through / completely, ceive = take / grasp",
-              "note": "単なるseeではなく、情報を意味あるものとして認識すること。東大評論では「現実そのもの」と「認識された現実」の区別が重要になる。",
-              "example": "Our perception of reality is shaped by memory, language, and expectation.",
-              "exampleJp": "私たちの現実認識は、記憶・言語・期待によって形作られる。"
+              "root": "per = through, ceive = take / grasp",
+              "note": "seeより深く、意味づけを含む。",
+              "example": "Perception is not a simple copy of reality.",
+              "exampleJp": "知覚は現実の単純なコピーではない。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
             },
             {
               "id": "u01_d01_w02",
               "word": "representation",
-              "jp": "表象／再構成されたモデル",
-              "coreImage": "世界を理解可能な形で頭の中に再構築したもの。",
+              "jp": "表象／表現",
+              "coreImage": "頭の中に作られる世界モデル。",
               "root": "re = again, present = show",
-              "note": "realityそのものではなく、心や言語が作る世界モデル。抽象評論ではmental representationやsocial representationとして出やすい。",
-              "example": "Mental representations help us organize complex information.",
-              "exampleJp": "心的表象は、複雑な情報を整理する助けになる。"
+              "note": "realityそのものではなく、心や言語の中で再構成されたもの。",
+              "example": "Representations simplify the world.",
+              "exampleJp": "表象は世界を単純化する。",
+              "difficulty": "C1",
+              "frequency": "high"
             },
             {
               "id": "u01_d01_w03",
-              "word": "interpretation",
-              "jp": "解釈／意味づけ",
-              "coreImage": "受け取った情報に意味を与える働き。",
-              "root": "inter = between, pret = value / explain",
-              "note": "同じ情報でも、経験・文化・文脈によって解釈は変わる。perceptionとセットで理解したい語。",
-              "example": "Perception always involves interpretation.",
-              "exampleJp": "知覚には常に解釈が含まれる。"
+              "word": "framework",
+              "jp": "枠組み",
+              "coreImage": "情報や議論を整理するための構造。",
+              "root": "frame + work",
+              "note": "評論文では、思考の前提や分析の型を示す。",
+              "example": "A scientific framework helps us interpret evidence.",
+              "exampleJp": "科学的枠組みは証拠を解釈する助けになる。",
+              "difficulty": "C1",
+              "frequency": "high"
             },
             {
               "id": "u01_d01_w04",
-              "word": "bias",
-              "jp": "認知の偏り／先入観",
-              "coreImage": "判断や認識が特定の方向へ傾くこと。",
-              "root": "Old French biais = oblique / slanting",
-              "note": "biasは単なる悪意ではなく、認知の効率化が生む偏りでもある。confirmation biasなどの形で評論に頻出。",
-              "example": "Bias can influence how people interpret evidence.",
-              "exampleJp": "バイアスは、人が証拠をどう解釈するかに影響しうる。"
+              "word": "assumption",
+              "jp": "前提／仮定",
+              "coreImage": "議論の土台にある、まだ検証されていない考え。",
+              "root": "as = toward, sume = take",
+              "note": "東大読解では、筆者や社会の隠れた前提を見抜くことが重要。",
+              "example": "The argument depends on a hidden assumption.",
+              "exampleJp": "その議論は隠れた前提に依存している。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
             },
             {
               "id": "u01_d01_w05",
-              "word": "illusion",
-              "jp": "錯覚／幻想",
-              "coreImage": "現実とは異なる形で知覚される経験。",
-              "root": "in = at / upon, ludere = play",
-              "note": "illusionは知覚の失敗であると同時に、知覚が能動的な構築である証拠。",
-              "example": "Illusions reveal that perception is an active process.",
-              "exampleJp": "錯覚は、知覚が能動的なプロセスであることを示す。"
-            }
-          ],
-          "meaningQuizzes": [
-            {
-              "id": "u01_d01_mq01",
-              "wordId": "u01_d01_w01",
-              "prompt": "perception",
-              "choices": ["知覚／認識", "制度", "証拠", "帰属意識"],
-              "answer": "知覚／認識",
-              "explanation": "perceptionは、情報を意味ある世界として理解する働き。"
+              "word": "interpretation",
+              "jp": "解釈",
+              "coreImage": "情報に意味を与える読み取り。",
+              "root": "inter = between, pret = explain",
+              "note": "同じ事実でも解釈により意味が変わる。",
+              "example": "Different cultures may offer different interpretations of the same event.",
+              "exampleJp": "異なる文化は同じ出来事に異なる解釈を与えることがある。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
             },
             {
-              "id": "u01_d01_mq02",
-              "wordId": "u01_d01_w02",
-              "prompt": "representation",
-              "choices": ["表象／再構成されたモデル", "監視", "確率", "自律性"],
-              "answer": "表象／再構成されたモデル",
-              "explanation": "representationは、realityを理解可能にする内的モデル。"
-            },
-            {
-              "id": "u01_d01_mq03",
-              "wordId": "u01_d01_w03",
-              "prompt": "interpretation",
-              "choices": ["解釈／意味づけ", "革新", "証明", "遺伝"],
-              "answer": "解釈／意味づけ",
-              "explanation": "interpretationは、入力情報に意味を与える働き。"
-            },
-            {
-              "id": "u01_d01_mq04",
-              "wordId": "u01_d01_w04",
-              "prompt": "bias",
-              "choices": ["認知の偏り／先入観", "記号", "推論", "文化"],
-              "answer": "認知の偏り／先入観",
-              "explanation": "biasは、判断や認識が特定方向に傾くこと。"
-            },
-            {
-              "id": "u01_d01_mq05",
-              "wordId": "u01_d01_w05",
-              "prompt": "illusion",
-              "choices": ["錯覚／幻想", "証拠", "制度", "分類"],
-              "answer": "錯覚／幻想",
-              "explanation": "illusionは、perceptionが能動的な構築であることを示す。"
-            }
-          ],
-          "audioQuizzes": [
-            {
-              "id": "u01_d01_aq01",
-              "wordId": "u01_d01_w01",
-              "spoken": "perception",
-              "choices": ["知覚／認識", "制度", "推論", "証拠"],
-              "answer": "知覚／認識",
-              "explanation": "perception = 知覚／認識／ものの見方。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d01_aq02",
-              "wordId": "u01_d01_w02",
-              "spoken": "representation",
-              "choices": ["表象／再構成されたモデル", "監視", "確率", "自律性"],
-              "answer": "表象／再構成されたモデル",
-              "explanation": "representation = 表象／再構成されたモデル。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d01_aq03",
-              "wordId": "u01_d01_w03",
-              "spoken": "interpretation",
-              "choices": ["解釈／意味づけ", "革新", "証明", "遺伝"],
-              "answer": "解釈／意味づけ",
-              "explanation": "interpretation = 解釈／意味づけ。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d01_aq04",
-              "wordId": "u01_d01_w04",
-              "spoken": "bias",
-              "choices": ["認知の偏り／先入観", "記号", "推論", "文化"],
-              "answer": "認知の偏り／先入観",
-              "explanation": "bias = 認知の偏り／先入観。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d01_aq05",
-              "wordId": "u01_d01_w05",
-              "spoken": "illusion",
-              "choices": ["錯覚／幻想", "証拠", "制度", "分類"],
-              "answer": "錯覚／幻想",
-              "explanation": "illusion = 錯覚／幻想。音から意味を即時に想起する練習です。"
-            }
-          ],
-          "mapNodes": ["perception", "interpretation", "representation", "bias", "illusion", "reality"]
-        },
-        {
-          "day": 2,
-          "title": "How does the mind select meaning?",
-          "mission": "Day 1で開いた海域をさらに潜り、注意・仮定・視点の語彙をつなげよう。",
-          "clearTitle": "🌊 Deeper Area Cleared!",
-          "clearMessage": "Perception Seaの浅瀬から、意味選択の深い海域へ進みました。注意・視点・前提を意識して読む準備が整いました。",
-          "rewards": {
-            "pearls": 3,
-            "exp": 20
-          },
-          "words": [
-            {
-              "id": "u01_d02_w01",
-              "word": "attention",
-              "jp": "注意／注目",
-              "coreImage": "多くの情報の中から、意識が特定の対象に光を当てる働き。",
-              "root": "ad = toward, tend = stretch",
-              "note": "attentionは単なる集中ではなく、どの情報を意味あるものとして選ぶかに関わる。",
-              "example": "Attention determines which information enters awareness.",
-              "exampleJp": "注意は、どの情報が意識に入るかを決める。"
-            },
-            {
-              "id": "u01_d02_w02",
-              "word": "cognition",
-              "jp": "認知／知的処理",
-              "coreImage": "知覚・記憶・判断・推論を含む、心の情報処理全体。",
-              "root": "co = together, gnoscere = know",
-              "note": "AI・心理学・哲学系の英文で非常に重要。perceptionより広く、thinking全体を含む。",
-              "example": "Human cognition depends on both perception and memory.",
-              "exampleJp": "人間の認知は、知覚と記憶の両方に依存している。"
-            },
-            {
-              "id": "u01_d02_w03",
+              "id": "u01_d01_w06",
               "word": "perspective",
               "jp": "視点／見方",
-              "coreImage": "どこから世界を見るかという認識の位置。",
+              "coreImage": "どの位置から世界を見るかという枠。",
               "root": "per = through, spect = look",
-              "note": "perspectiveは物理的な視点だけでなく、社会的・文化的なものの見方も表す。",
-              "example": "A change in perspective can alter the meaning of an event.",
-              "exampleJp": "視点が変わると、出来事の意味も変わりうる。"
+              "note": "perspectiveが変わると、同じ情報の意味も変わる。",
+              "example": "Changing perspective can change the meaning of experience.",
+              "exampleJp": "視点を変えることで経験の意味が変わることがある。",
+              "difficulty": "B2",
+              "frequency": "high"
             },
             {
-              "id": "u01_d02_w04",
-              "word": "assumption",
-              "jp": "前提／思い込み",
-              "coreImage": "意識されないまま判断の土台になっている考え。",
-              "root": "ad = toward, sumere = take",
-              "note": "東大型読解では、筆者がどのassumptionを疑っているかを読むことが重要。",
-              "example": "Hidden assumptions often shape our interpretation.",
-              "exampleJp": "隠れた前提は、しばしば私たちの解釈を形作る。"
+              "id": "u01_d01_w07",
+              "word": "cognition",
+              "jp": "認知",
+              "coreImage": "知覚・記憶・推論を含む心の働き。",
+              "root": "cogn = know",
+              "note": "AI・心理学・哲学テーマに接続する中核語。",
+              "example": "Human cognition is shaped by language and culture.",
+              "exampleJp": "人間の認知は言語と文化によって形作られる。",
+              "difficulty": "C1",
+              "frequency": "high"
             },
             {
-              "id": "u01_d02_w05",
-              "word": "framework",
-              "jp": "枠組み／思考の構造",
-              "coreImage": "情報を整理し、意味づけるための見取り図。",
-              "root": "frame = structure, work = constructed system",
-              "note": "frameworkは抽象評論で頻出。概念をばらばらに覚えず、枠組みの中で読む力につながる。",
-              "example": "A theoretical framework helps us connect different ideas.",
-              "exampleJp": "理論的枠組みは、異なる考えを結びつける助けになる。"
+              "id": "u01_d01_w08",
+              "word": "evidence",
+              "jp": "証拠／根拠",
+              "coreImage": "主張を支える観察・事実・データ。",
+              "root": "e = out, vid = see",
+              "note": "argumentとセットで読解上きわめて重要。",
+              "example": "Claims should be supported by reliable evidence.",
+              "exampleJp": "主張は信頼できる証拠によって支えられるべきである。",
+              "difficulty": "B1-B2",
+              "frequency": "high"
             }
           ],
-          "meaningQuizzes": [
-            {
-              "id": "u01_d02_mq01",
-              "wordId": "u01_d02_w01",
-              "prompt": "attention",
-              "choices": ["注意／注目", "錯覚", "証拠", "分類"],
-              "answer": "注意／注目",
-              "explanation": "attentionは、多くの情報の中から意識が選び取る働き。"
-            },
-            {
-              "id": "u01_d02_mq02",
-              "wordId": "u01_d02_w02",
-              "prompt": "cognition",
-              "choices": ["認知／知的処理", "制度", "帰属意識", "証明"],
-              "answer": "認知／知的処理",
-              "explanation": "cognitionは、知覚・記憶・判断・推論を含む心の情報処理。"
-            },
-            {
-              "id": "u01_d02_mq03",
-              "wordId": "u01_d02_w03",
-              "prompt": "perspective",
-              "choices": ["視点／見方", "監視", "遺伝", "確率"],
-              "answer": "視点／見方",
-              "explanation": "perspectiveは、どこから世界を見るかという認識の位置。"
-            },
-            {
-              "id": "u01_d02_mq04",
-              "wordId": "u01_d02_w04",
-              "prompt": "assumption",
-              "choices": ["前提／思い込み", "文化", "革新", "表象"],
-              "answer": "前提／思い込み",
-              "explanation": "assumptionは、判断の土台になる前提や思い込み。"
-            },
-            {
-              "id": "u01_d02_mq05",
-              "wordId": "u01_d02_w05",
-              "prompt": "framework",
-              "choices": ["枠組み／思考の構造", "感覚入力", "錯覚", "証拠"],
-              "answer": "枠組み／思考の構造",
-              "explanation": "frameworkは、情報を整理し意味づけるための枠組み。"
-            }
-          ],
-          "audioQuizzes": [
-            {
-              "id": "u01_d02_aq01",
-              "wordId": "u01_d02_w01",
-              "spoken": "attention",
-              "choices": ["注意／注目", "錯覚", "証拠", "分類"],
-              "answer": "注意／注目",
-              "explanation": "attention = 注意／注目。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d02_aq02",
-              "wordId": "u01_d02_w02",
-              "spoken": "cognition",
-              "choices": ["認知／知的処理", "制度", "帰属意識", "証明"],
-              "answer": "認知／知的処理",
-              "explanation": "cognition = 認知／知的処理。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d02_aq03",
-              "wordId": "u01_d02_w03",
-              "spoken": "perspective",
-              "choices": ["視点／見方", "監視", "遺伝", "確率"],
-              "answer": "視点／見方",
-              "explanation": "perspective = 視点／見方。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d02_aq04",
-              "wordId": "u01_d02_w04",
-              "spoken": "assumption",
-              "choices": ["前提／思い込み", "文化", "革新", "表象"],
-              "answer": "前提／思い込み",
-              "explanation": "assumption = 前提／思い込み。音から意味を即時に想起する練習です。"
-            },
-            {
-              "id": "u01_d02_aq05",
-              "wordId": "u01_d02_w05",
-              "spoken": "framework",
-              "choices": ["枠組み／思考の構造", "感覚入力", "錯覚", "証拠"],
-              "answer": "枠組み／思考の構造",
-              "explanation": "framework = 枠組み／思考の構造。音から意味を即時に想起する練習です。"
-            }
-          ],
-          "mapNodes": ["attention", "cognition", "perspective", "assumption", "framework", "meaning selection"]
+          "meaningQuizzes": [],
+          "audioQuizzes": []
         }
       ]
     }
