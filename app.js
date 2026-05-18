@@ -204,15 +204,15 @@
         '<h2>今日の海域</h2>' +
         '<p>' + h(status) + '</p>' +
         '<div class="clear-grid">' +
-          clearPill('Listening', clears.listening) +
-          clearPill('Quiz', clears.quiz) +
           clearPill('Flashcard', clears.flashcard) +
+          clearPill('Quiz', clears.quiz) +
+          clearPill('Listening', clears.listening) +
         '</div>' +
       '</section>' +
       '<section class="mode-grid">' +
-        modeCard('listening', '🔊', '音声 → 日本語4択', '英単語を聞いて意味を即時想起します。') +
-        modeCard('quiz', '📝', '英語 → 日本語4択', '語の意味を正確に確認します。') +
         modeCard('flashcard', '🌊', 'Flashcard', '例文・語源・意味を確認します。') +
+        modeCard('quiz', '📝', '英語 → 日本語4択', '語の意味を正確に確認します。') +
+        modeCard('listening', '🔊', '音声 → 日本語4択', '英単語を聞いて意味を即時想起します。') +
       '</section>' +
       '<section class="card day-list-card"><h2>Day選択</h2><div class="day-list">' + dayButtonsHtml() + '</div></section>' +
       (next && completed ? '<button class="primary wide" data-action="nextDay">Day ' + h(next.day) + 'へ進む</button>' : '');
@@ -267,9 +267,9 @@
     nav.className = 'bottom-nav';
     nav.innerHTML =
       '<button data-action="home" class="' + (currentMode === 'home' ? 'active' : '') + '">Home</button>' +
-      '<button data-action="mode" data-mode="listening" class="' + (currentMode === 'listening' ? 'active' : '') + '">Listen</button>' +
+      '<button data-action="mode" data-mode="flashcard" class="' + (currentMode === 'flashcard' ? 'active' : '') + '">Cards</button>' +
       '<button data-action="mode" data-mode="quiz" class="' + (currentMode === 'quiz' ? 'active' : '') + '">Quiz</button>' +
-      '<button data-action="mode" data-mode="flashcard" class="' + (currentMode === 'flashcard' ? 'active' : '') + '">Cards</button>';
+      '<button data-action="mode" data-mode="listening" class="' + (currentMode === 'listening' ? 'active' : '') + '">Listen</button>';
     return nav;
   }
 
