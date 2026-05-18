@@ -22,34 +22,302 @@ let currentWeakReviewItem = null;
 const SECTION_COUNT = 3;
 
 const fallbackData = {
-  meta: {
-    schemaVersion: 2,
-    courseId: 'todai-avna',
-    series: '東京大学編',
-    title: 'Academic Vocabulary Network Adventure 東京大学編'
+  "meta": {
+    "schemaVersion": 2,
+    "courseId": "todai-avna",
+    "series": "東京大学編",
+    "title": "Academic Vocabulary Network Adventure 東京大学編"
   },
-  units: [
+  "units": [
     {
-      unitId: 'u01',
-      unitTitle: 'Perception',
-      seaName: 'Perception Sea',
-      days: [
+      "unitId": "u01",
+      "unitTitle": "Perception",
+      "seaName": "Perception Sea",
+      "days": [
         {
-          day: 1,
-          title: 'Do we see reality itself?',
-          mission: '音・意味・概念をつなぎ、Perception Seaの入口を解放しよう。',
-          clearTitle: 'Sea Area Cleared!',
-          clearMessage: 'Perception Seaの入口を解放しました。',
-          rewards: { pearls: 3, exp: 20 },
-          words: [
-            { id:'u01_d01_w01', word:'perception', jp:'知覚／認識', coreImage:'外界の情報を、脳が意味ある世界として理解する働き。', root:'per = through, ceive = take / grasp', note:'seeより深く、意味づけを含む。', example:'Perception is not a simple copy of reality.', exampleJp:'知覚は現実の単純なコピーではない。' },
-            { id:'u01_d01_w02', word:'representation', jp:'表象／表現', coreImage:'頭の中の世界モデル。', root:'re = again, present = show', note:'realityそのものではない。', example:'Representations simplify the world.', exampleJp:'表象は世界を単純化する。' },
-            { id:'u01_d01_w03', word:'framework', jp:'枠組み', coreImage:'情報や議論を整理するための構造。', root:'frame + work', note:'評論文で考え方の土台を示す語。', example:'A scientific framework helps us interpret evidence.', exampleJp:'科学的枠組みは証拠を解釈する助けになる。' },
-            { id:'u01_d01_w04', word:'assumption', jp:'前提／仮定', coreImage:'議論の土台にある、まだ検証されていない考え。', root:'as = toward, sume = take', note:'東大読解では隠れた前提を見抜くことが重要。', example:'The argument depends on a hidden assumption.', exampleJp:'その議論は隠れた前提に依存している。' }
+          "day": 1,
+          "title": "Do we see reality itself?",
+          "mission": "音・意味・概念をつなぎ、Perception Seaの入口を解放しよう。",
+          "clearTitle": "Sea Area Cleared!",
+          "clearMessage": "Perception Seaの入口を解放しました。",
+          "rewards": {
+            "pearls": 3,
+            "exp": 20
+          },
+          "mapNodes": [
+            "perception",
+            "representation",
+            "framework",
+            "assumption",
+            "evidence"
           ],
-          meaningQuizzes: [],
-          audioQuizzes: [],
-          mapNodes: ['perception','representation','framework','assumption']
+          "words": [
+            {
+              "id": "u01_d01_w01",
+              "word": "perception",
+              "jp": "知覚／認識",
+              "coreImage": "外界の情報を、脳が意味ある世界として理解する働き。",
+              "root": "per = through, ceive = take / grasp",
+              "note": "seeより深く、意味づけを含む。",
+              "example": "Perception is not a simple copy of reality.",
+              "exampleJp": "知覚は現実の単純なコピーではない。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d01_w02",
+              "word": "representation",
+              "jp": "表象／表現",
+              "coreImage": "頭の中に作られる世界モデル。",
+              "root": "re = again, present = show",
+              "note": "realityそのものではなく、心や言語の中で再構成されたもの。",
+              "example": "Representations simplify the world.",
+              "exampleJp": "表象は世界を単純化する。",
+              "difficulty": "C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d01_w03",
+              "word": "framework",
+              "jp": "枠組み",
+              "coreImage": "情報や議論を整理するための構造。",
+              "root": "frame + work",
+              "note": "評論文では、思考の前提や分析の型を示す。",
+              "example": "A scientific framework helps us interpret evidence.",
+              "exampleJp": "科学的枠組みは証拠を解釈する助けになる。",
+              "difficulty": "C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d01_w04",
+              "word": "assumption",
+              "jp": "前提／仮定",
+              "coreImage": "議論の土台にある、まだ検証されていない考え。",
+              "root": "as = toward, sume = take",
+              "note": "東大読解では、筆者や社会の隠れた前提を見抜くことが重要。",
+              "example": "The argument depends on a hidden assumption.",
+              "exampleJp": "その議論は隠れた前提に依存している。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d01_w05",
+              "word": "evidence",
+              "jp": "証拠／根拠",
+              "coreImage": "主張を支える観察・事実・データ。",
+              "root": "e = out, vid = see",
+              "note": "argumentとセットで読解上きわめて重要。",
+              "example": "Claims should be supported by reliable evidence.",
+              "exampleJp": "主張は信頼できる証拠によって支えられるべきである。",
+              "difficulty": "B1-B2",
+              "frequency": "high"
+            }
+          ],
+          "meaningQuizzes": [],
+          "audioQuizzes": []
+        },
+        {
+          "day": 2,
+          "title": "How does the mind organize the world?",
+          "mission": "認知・概念・文脈をつなぎ、見えたものを思考に変えよう。",
+          "clearTitle": "Sea Area Cleared!",
+          "clearMessage": "Perception Seaの浅瀬を越えました。",
+          "rewards": {
+            "pearls": 3,
+            "exp": 20
+          },
+          "mapNodes": [
+            "cognition",
+            "concept",
+            "context",
+            "inference",
+            "observation",
+            "phenomenon"
+          ],
+          "words": [
+            {
+              "id": "u01_d02_w01",
+              "word": "cognition",
+              "jp": "認知",
+              "coreImage": "知覚・記憶・推論を含む心の働き。",
+              "root": "cogn = know",
+              "note": "AI・心理学・哲学テーマに接続する中核語。",
+              "example": "Human cognition is shaped by language and culture.",
+              "exampleJp": "人間の認知は言語と文化によって形作られる。",
+              "difficulty": "C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d02_w02",
+              "word": "concept",
+              "jp": "概念",
+              "coreImage": "複数の事例をまとめる抽象的な考え。",
+              "root": "con = together, cept = take / grasp",
+              "note": "抽象評論の基本語。conceptual, conceptionにもつながる。",
+              "example": "The concept of intelligence has changed over time.",
+              "exampleJp": "知能という概念は時代とともに変化してきた。",
+              "difficulty": "B2",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d02_w03",
+              "word": "context",
+              "jp": "文脈／状況",
+              "coreImage": "言葉や行動の意味を決める周囲の条件。",
+              "root": "con = together, text = weave",
+              "note": "同じ表現でもcontextが変わると意味が変わる。",
+              "example": "Meaning depends heavily on context.",
+              "exampleJp": "意味は文脈に大きく依存する。",
+              "difficulty": "B2",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d02_w04",
+              "word": "inference",
+              "jp": "推論",
+              "coreImage": "直接書かれていないことを根拠から導くこと。",
+              "root": "in = into, fer = carry",
+              "note": "東大読解では、明示情報からの論理的読み取りが重要。",
+              "example": "Readers often make inferences from small details.",
+              "exampleJp": "読者はしばしば小さな細部から推論を行う。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d02_w05",
+              "word": "observation",
+              "jp": "観察",
+              "coreImage": "対象を注意深く見て情報を得ること。",
+              "root": "ob = toward, serv = watch / keep",
+              "note": "科学的議論では evidence の出発点になる。",
+              "example": "Careful observation can challenge common beliefs.",
+              "exampleJp": "注意深い観察は一般的な信念に疑問を投げかけることがある。",
+              "difficulty": "B2",
+              "frequency": "medium"
+            },
+            {
+              "id": "u01_d02_w06",
+              "word": "phenomenon",
+              "jp": "現象",
+              "coreImage": "観察される出来事や事実。",
+              "root": "Greek phainein = appear",
+              "note": "自然科学・社会科学の評論で頻出。複数形はphenomena。",
+              "example": "Language change is a social phenomenon.",
+              "exampleJp": "言語変化は社会的現象である。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            }
+          ],
+          "meaningQuizzes": [],
+          "audioQuizzes": []
+        },
+        {
+          "day": 3,
+          "title": "Can we interpret the world without bias?",
+          "mission": "interpretation / perspective / bias 系の語を回収し、見方の偏りを読み解こう。",
+          "clearTitle": "Sea Area Cleared!",
+          "clearMessage": "Interpretation Reefを解放しました。",
+          "rewards": {
+            "pearls": 3,
+            "exp": 20
+          },
+          "mapNodes": [
+            "interpretation",
+            "perspective",
+            "bias",
+            "subjective",
+            "objective",
+            "distort",
+            "evaluate"
+          ],
+          "words": [
+            {
+              "id": "u01_d03_w01",
+              "word": "interpretation",
+              "jp": "解釈",
+              "coreImage": "情報や出来事に意味を与える読み取り。",
+              "root": "inter = between, pret = explain",
+              "note": "同じ事実でも、解釈によって議論の方向が変わる。",
+              "example": "Different cultures may offer different interpretations of the same event.",
+              "exampleJp": "異なる文化は同じ出来事に異なる解釈を与えることがある。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d03_w02",
+              "word": "perspective",
+              "jp": "視点／見方",
+              "coreImage": "どの位置から世界を見るかという心の構え。",
+              "root": "per = through, spect = look",
+              "note": "perspectiveが変わると、同じ情報の意味も変わる。",
+              "example": "Changing perspective can change the meaning of experience.",
+              "exampleJp": "視点を変えることで経験の意味が変わることがある。",
+              "difficulty": "B2",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d03_w03",
+              "word": "bias",
+              "jp": "偏り／先入観",
+              "coreImage": "判断を一方向に傾ける見えない力。",
+              "root": "Old French biais = slant",
+              "note": "認知バイアス、メディアバイアスなど評論で非常に重要。",
+              "example": "Bias can affect how we interpret evidence.",
+              "exampleJp": "偏りは、私たちが証拠をどう解釈するかに影響しうる。",
+              "difficulty": "B2",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d03_w04",
+              "word": "subjective",
+              "jp": "主観的な",
+              "coreImage": "見る人の感情・経験・立場に左右される状態。",
+              "root": "sub = under, ject = throw",
+              "note": "objectiveとの対比で読解上重要。",
+              "example": "Memory is often more subjective than we realize.",
+              "exampleJp": "記憶は私たちが思う以上に主観的であることが多い。",
+              "difficulty": "B2-C1",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d03_w05",
+              "word": "objective",
+              "jp": "客観的な",
+              "coreImage": "個人の感情や立場から離れて判断しようとする状態。",
+              "root": "ob = against, ject = throw",
+              "note": "subjectiveとの対比で使う。完全な客観性が可能かという論点にも接続する。",
+              "example": "Scientific writing aims to be as objective as possible.",
+              "exampleJp": "科学的文章はできるだけ客観的であることを目指す。",
+              "difficulty": "B2",
+              "frequency": "high"
+            },
+            {
+              "id": "u01_d03_w06",
+              "word": "distort",
+              "jp": "歪める",
+              "coreImage": "事実や形を本来とは違う方向に曲げること。",
+              "root": "dis = apart, tort = twist",
+              "note": "distorted memory / distorted image のように使う。",
+              "example": "Prejudice may distort our view of others.",
+              "exampleJp": "偏見は他者に対する私たちの見方を歪めることがある。",
+              "difficulty": "C1",
+              "frequency": "medium"
+            },
+            {
+              "id": "u01_d03_w07",
+              "word": "evaluate",
+              "jp": "評価する",
+              "coreImage": "価値や妥当性を基準に照らして判断すること。",
+              "root": "e = out, value = worth",
+              "note": "東大読解では、筆者の主張や根拠の評価に関わる。",
+              "example": "We need to evaluate information before accepting it.",
+              "exampleJp": "情報を受け入れる前に評価する必要がある。",
+              "difficulty": "B2",
+              "frequency": "high"
+            }
+          ],
+          "meaningQuizzes": [],
+          "audioQuizzes": []
         }
       ]
     }
