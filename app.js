@@ -1,4 +1,4 @@
-/* Recovery stable + English-to-Japanese Quiz restored. Weak Words intentionally disabled. */
+/* DOM-safe recovery stable + English-to-Japanese Quiz restored. Weak Words intentionally disabled. */
 (function () {
   'use strict';
 
@@ -41,7 +41,12 @@
 
   function init() {
     app = document.getElementById('app');
-    if (!app) return;
+    if (!app) {
+      app = document.createElement('div');
+      app.id = 'app';
+      app.className = 'app-shell';
+      document.body.appendChild(app);
+    }
     loadData().then(function (loaded) {
       data = normalizeData(loaded || fallbackData);
       state = loadState(data);
@@ -136,6 +141,7 @@
   }
 
   function currentDay() {
+    if (!data || !Array.isArray(data.days) || data.days.length === 0) return { id: 'unit1-day1', day: 1, title: 'Day 1', theme: '', words: [] };
     return data.days[currentDayIndex] || data.days[0];
   }
 
@@ -149,7 +155,7 @@
   }
 
   function render() {
-    if (!data || !state) return;
+    if (!app || !data || !state) return;
     var day = currentDay();
     app.innerHTML = '';
     app.appendChild(buildHeader(day));
@@ -302,6 +308,11 @@
 
   function startQuiz(mode) {
     var day = currentDay();
+    if (!day || !Array.isArray(day.words) || day.words.length === 0) {
+      currentMode = 'home';
+      render();
+      return;
+    }
     quiz = { mode: mode, order: shuffle(day.words.map(function (_, i) { return i; })), pos: 0, score: 0, locked: false, selected: -1 };
     renderQuizQuestion();
   }
@@ -311,6 +322,7 @@
     var main = app.querySelector('.main');
     if (!main || !quiz) return;
     var word = day.words[quiz.order[quiz.pos]];
+    if (!word) { finishQuiz(); return; }
     var choices = makeChoices(word, day.words);
     quiz.correctChoice = choices.indexOf(word.meaning);
     main.innerHTML = '' +
@@ -346,6 +358,10 @@
       if (i === choiceIndex && i !== quiz.correctChoice) button.classList.add('wrong');
     });
     var card = app.querySelector('.quiz-card');
+    if (!card) {
+      renderQuizQuestion();
+      return;
+    }
     var result = document.createElement('div');
     result.className = 'result-box';
     result.innerHTML = (choiceIndex === quiz.correctChoice ? '<strong>Correct!</strong>' : '<strong>Review!</strong>') +
@@ -366,12 +382,19 @@
   }
 
   function finishQuiz() {
+    if (!quiz) return;
     var mode = quiz.mode;
     var score = quiz.score;
     var total = quiz.order.length;
     var passed = score === total;
-    var main = app.querySelector('.main');
+    var main = app ? app.querySelector('.main') : null;
     if (passed) clearMode(mode, true);
+    if (!main) {
+      currentMode = 'home';
+      quiz = null;
+      render();
+      return;
+    }
     main.innerHTML = '<section class="card result-card"><h2>' + (passed ? 'CLEAR!' : 'もう一度挑戦') + '</h2><p>Score: ' + score + ' / ' + total + '</p><p>' + (passed ? 'このモードはCLEARです。' : '全問正解でCLEARになります。') + '</p><button class="primary wide" data-action="' + (passed ? 'home' : 'startQuiz') + '" data-mode="' + h(mode) + '">' + (passed ? 'Homeへ戻る' : '再挑戦') + '</button></section>';
     quiz = null;
     bindEvents();
@@ -428,6 +451,7 @@
     var index = Number(wrap.getAttribute('data-card-index')) || 0;
     var flipped = wrap.getAttribute('data-flipped') === '1';
     var main = app.querySelector('.main');
+    if (!main) { render(); return; }
     main.innerHTML = flashcardHtml(currentDay(), index, !flipped);
     bindEvents();
   }
@@ -437,6 +461,7 @@
     if (!wrap) return;
     var index = Number(wrap.getAttribute('data-card-index')) || 0;
     var main = app.querySelector('.main');
+    if (!main) { render(); return; }
     main.innerHTML = flashcardHtml(currentDay(), index + delta, false);
     bindEvents();
   }
@@ -454,11 +479,12 @@
 
   function renderErrorNotice(message) {
     render();
-    var main = app.querySelector('.main');
+    var main = app ? app.querySelector('.main') : null;
+    if (!main) return;
     var notice = document.createElement('section');
     notice.className = 'card warning';
-    notice.textContent = message;
-    main.insertBefore(notice, main.firstChild);
+    if (notice) notice.textContent = message || '';
+    main.insertBefore(notice, main.firstChild || null);
   }
 
   window.addEventListener('error', function (event) {
