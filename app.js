@@ -1,725 +1,476 @@
-/*
-  Academic Vocabulary Network Adventure
-  Stable progression build
+/* Recovery stable + English-to-Japanese Quiz restored. Weak Words intentionally disabled. */
+(function () {
+  'use strict';
 
-  Core rule:
-  - Progression state is stored only in PROGRESS_KEY.
-  - Weak Words are stored only in WEAK_KEY.
-  - Quiz/UI temporary state never controls day unlock directly.
-*/
+  var DATA_FILE = 'vocabulary.json';
+  var STORAGE_KEY = 'tuv_recovery_progress_v1';
+  var app = null;
+  var data = null;
+  var state = null;
+  var currentDayIndex = 0;
+  var currentMode = 'home';
+  var quiz = null;
 
-const DATA_URL = './vocabulary.json';
-const PROGRESS_KEY = 'tuv_progress_state_v2';
-const WEAK_KEY = 'tuv_weak_words_v1';
-const ACTIVE_DAY_KEY = 'tuv_active_day_v1';
-const ACTIVE_VIEW_KEY = 'tuv_active_view_v1';
+  var fallbackData = {
+    appTitle: 'Academic Vocabulary Network Adventure',
+    unit: { id: 'unit1', title: 'Unit 1: Perception Sea', coreQuestion: 'Do we see reality itself?' },
+    days: [
+      { id: 'unit1-day1', day: 1, title: 'Day 1: Seeing and Meaning', theme: 'Perception and interpretation', words: [
+        { word: 'perception', meaning: '知覚／認識', pos: 'noun', example: 'Our perception of reality is shaped by language and memory.', translation: '私たちの現実認識は、言語や記憶によって形作られる。', root: 'per- + ceive = completely take in' },
+        { word: 'represent', meaning: '表す／代表する', pos: 'verb', example: 'A graph can represent complex information in a simple form.', translation: 'グラフは複雑な情報を単純な形で表すことができる。', root: 're- + present = present again' },
+        { word: 'interpret', meaning: '解釈する', pos: 'verb', example: 'Readers interpret the same text in different ways.', translation: '読者は同じ文章を異なる方法で解釈する。', root: 'inter- + pret = explain between' },
+        { word: 'assumption', meaning: '前提／思い込み', pos: 'noun', example: 'The argument depends on a hidden assumption.', translation: 'その議論は隠れた前提に依存している。', root: 'as- + sumere = take up' },
+        { word: 'framework', meaning: '枠組み', pos: 'noun', example: 'This framework helps us compare different theories.', translation: 'この枠組みは異なる理論を比較するのに役立つ。', root: 'frame + work = supporting structure' }
+      ] },
+      { id: 'unit1-day2', day: 2, title: 'Day 2: Evidence and Inference', theme: 'How we move from signs to conclusions', words: [
+        { word: 'evidence', meaning: '証拠／根拠', pos: 'noun', example: 'The claim is weak because there is little evidence to support it.', translation: 'その主張を支える証拠がほとんどないため、その主張は弱い。', root: 'e- + videre = clearly seen' },
+        { word: 'infer', meaning: '推論する', pos: 'verb', example: "We can infer the writer's position from the final paragraph.", translation: '最後の段落から筆者の立場を推論できる。', root: 'in- + ferre = carry into' },
+        { word: 'indicate', meaning: '示す', pos: 'verb', example: 'The data indicate a change in public attitudes.', translation: 'そのデータは世論の変化を示している。', root: 'in- + dicare = point out' },
+        { word: 'distinguish', meaning: '区別する', pos: 'verb', example: 'It is important to distinguish fact from opinion.', translation: '事実と意見を区別することが重要である。', root: 'dis- + stinguere = mark apart' },
+        { word: 'context', meaning: '文脈／状況', pos: 'noun', example: 'The meaning of a word often depends on its context.', translation: '単語の意味はしばしば文脈に依存する。', root: 'con- + texere = weave together' }
+      ] },
+      { id: 'unit1-day3', day: 3, title: 'Day 3: Concepts and Models', theme: 'Thinking through abstract tools', words: [
+        { word: 'concept', meaning: '概念', pos: 'noun', example: 'The concept of freedom has changed across history.', translation: '自由という概念は歴史を通じて変化してきた。', root: 'con- + capere = take together' },
+        { word: 'category', meaning: '分類／カテゴリー', pos: 'noun', example: 'The boundary between the two categories is not always clear.', translation: 'その二つのカテゴリーの境界は常に明確とは限らない。', root: 'Greek kategoria = statement, class' },
+        { word: 'structure', meaning: '構造', pos: 'noun', example: 'The structure of the essay makes the argument easy to follow.', translation: 'そのエッセイの構造により、議論を追いやすくなっている。', root: 'struere = build' },
+        { word: 'model', meaning: '模型／モデル化する', pos: 'noun/verb', example: 'Scientists use models to explain complex systems.', translation: '科学者は複雑なシステムを説明するためにモデルを用いる。', root: 'modulus = measure' },
+        { word: 'abstract', meaning: '抽象的な／抽出する', pos: 'adjective/verb', example: 'Abstract ideas become clearer when we connect them to examples.', translation: '抽象的な考えは、具体例と結びつけるとより明確になる。', root: 'ab- + trahere = draw away' }
+      ] }
+    ]
+  };
 
-const app = document.getElementById('app');
-const levelBadge = document.getElementById('levelBadge');
-const navButtons = Array.from(document.querySelectorAll('[data-nav]'));
-
-let vocabularyData = null;
-let activeDayId = null;
-let activeView = 'home';
-let quizState = null;
-let cardState = { index: 0, flipped: false };
-
-const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-
-function safeParse(json, fallback) {
-  try {
-    return JSON.parse(json) ?? fallback;
-  } catch (_error) {
-    return fallback;
+  function init() {
+    app = document.getElementById('app');
+    if (!app) return;
+    loadData().then(function (loaded) {
+      data = normalizeData(loaded || fallbackData);
+      state = loadState(data);
+      currentDayIndex = firstUsableDayIndex();
+      render();
+    }).catch(function (error) {
+      console.error(error);
+      data = normalizeData(fallbackData);
+      state = loadState(data);
+      currentDayIndex = firstUsableDayIndex();
+      renderErrorNotice('vocabulary.json の読み込みに失敗したため、内蔵データで起動しました。');
+    });
   }
-}
 
-function getAllDayIds() {
-  return (vocabularyData?.days || []).map((day) => day.id);
-}
+  function loadData() {
+    if (!window.fetch) return Promise.resolve(fallbackData);
+    return fetch(DATA_FILE, { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) throw new Error('vocabulary.json not found');
+      return res.json();
+    });
+  }
 
-function getDayById(dayId) {
-  return (vocabularyData?.days || []).find((day) => day.id === dayId) || vocabularyData?.days?.[0];
-}
+  function normalizeData(src) {
+    var clean = src && src.days && src.days.length ? src : fallbackData;
+    clean.days.forEach(function (day, index) {
+      if (!day.id) day.id = 'unit1-day' + (index + 1);
+      if (!day.day) day.day = index + 1;
+      if (!Array.isArray(day.words)) day.words = [];
+    });
+    return clean;
+  }
 
-function createDefaultProgressState() {
-  const dayIds = getAllDayIds();
-  const unlockedDays = {};
-  const completedDays = {};
-  const activityCompletion = {};
+  function defaultState(sourceData) {
+    var s = { unlocked: {}, completed: {}, clears: {} };
+    sourceData.days.forEach(function (day, index) {
+      s.unlocked[day.id] = index === 0;
+      s.completed[day.id] = false;
+      s.clears[day.id] = { listening: false, quiz: false, flashcard: false };
+    });
+    return s;
+  }
 
-  dayIds.forEach((dayId, index) => {
-    unlockedDays[dayId] = index === 0;
-    completedDays[dayId] = false;
-    activityCompletion[dayId] = {
-      listening: false,
-      flashcard: false
-    };
-  });
+  function loadState(sourceData) {
+    var base = defaultState(sourceData);
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return base;
+      var saved = JSON.parse(raw);
+      sourceData.days.forEach(function (day, index) {
+        if (saved.unlocked && typeof saved.unlocked[day.id] === 'boolean') base.unlocked[day.id] = saved.unlocked[day.id];
+        if (saved.completed && typeof saved.completed[day.id] === 'boolean') base.completed[day.id] = saved.completed[day.id];
+        if (saved.clears && saved.clears[day.id]) {
+          base.clears[day.id].listening = !!saved.clears[day.id].listening;
+          base.clears[day.id].quiz = !!saved.clears[day.id].quiz;
+          base.clears[day.id].flashcard = !!saved.clears[day.id].flashcard;
+        }
+        if (index === 0) base.unlocked[day.id] = true;
+      });
+      applyUnlockRules(base, sourceData);
+      return base;
+    } catch (e) {
+      console.warn('Progress reset because saved state was invalid.', e);
+      return base;
+    }
+  }
 
-  return {
-    version: 2,
-    updatedAt: new Date().toISOString(),
-    unlockedDays,
-    completedDays,
-    activityCompletion
-  };
-}
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('localStorage save failed', e);
+    }
+  }
 
-function normalizeProgressState(rawState) {
-  const defaultState = createDefaultProgressState();
-  const state = rawState && typeof rawState === 'object' ? rawState : {};
-
-  const normalized = {
-    version: 2,
-    updatedAt: state.updatedAt || new Date().toISOString(),
-    unlockedDays: { ...defaultState.unlockedDays, ...(state.unlockedDays || {}) },
-    completedDays: { ...defaultState.completedDays, ...(state.completedDays || {}) },
-    activityCompletion: { ...defaultState.activityCompletion }
-  };
-
-  // Defensive migration from older builds that may have mixed quiz data into progress.
-  if (state.completedDays && Array.isArray(state.completedDays)) {
-    state.completedDays.forEach((dayId) => {
-      if (Object.prototype.hasOwnProperty.call(normalized.completedDays, dayId)) {
-        normalized.completedDays[dayId] = true;
+  function applyUnlockRules(s, sourceData) {
+    sourceData.days.forEach(function (day, index) {
+      var clears = s.clears[day.id] || { listening: false, quiz: false, flashcard: false };
+      s.completed[day.id] = !!(clears.listening && clears.quiz && clears.flashcard);
+      if (index === 0) s.unlocked[day.id] = true;
+      if (s.completed[day.id] && sourceData.days[index + 1]) {
+        s.unlocked[sourceData.days[index + 1].id] = true;
       }
     });
   }
 
-  if (state.activityCompletion && typeof state.activityCompletion === 'object') {
-    getAllDayIds().forEach((dayId) => {
-      normalized.activityCompletion[dayId] = {
-        listening: Boolean(state.activityCompletion?.[dayId]?.listening),
-        flashcard: Boolean(state.activityCompletion?.[dayId]?.flashcard)
-      };
+  function firstUsableDayIndex() {
+    var last = 0;
+    data.days.forEach(function (day, index) {
+      if (state.unlocked[day.id]) last = index;
+    });
+    return last;
+  }
+
+  function currentDay() {
+    return data.days[currentDayIndex] || data.days[0];
+  }
+
+  function h(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function render() {
+    if (!data || !state) return;
+    var day = currentDay();
+    app.innerHTML = '';
+    app.appendChild(buildHeader(day));
+    var main = document.createElement('main');
+    main.className = 'main';
+    if (currentMode === 'home') main.innerHTML = homeHtml(day);
+    if (currentMode === 'listening') main.innerHTML = modeIntroHtml(day, 'listening');
+    if (currentMode === 'quiz') main.innerHTML = modeIntroHtml(day, 'quiz');
+    if (currentMode === 'flashcard') main.innerHTML = flashcardHtml(day, 0, false);
+    app.appendChild(main);
+    app.appendChild(buildBottomNav());
+    bindEvents();
+  }
+
+  function buildHeader(day) {
+    var header = document.createElement('header');
+    header.className = 'hero';
+    var unitTitle = data.unit && data.unit.title ? data.unit.title : 'Academic Vocabulary Network';
+    var progress = progressPercent();
+    header.innerHTML =
+      '<div class="hero-top">' +
+        '<div class="brand"><span class="brand-icon">🦈</span><span>' + h(data.appTitle || 'Vocabulary Adventure') + '</span></div>' +
+        '<button class="small-button" data-action="reset">Reset</button>' +
+      '</div>' +
+      '<p class="unit-title">' + h(unitTitle) + '</p>' +
+      '<h1>' + h(day.title) + '</h1>' +
+      '<p class="theme">' + h(day.theme || '') + '</p>' +
+      '<div class="oxygen-wrap"><div class="oxygen-label"><span>Progress</span><span>' + progress + '%</span></div><div class="oxygen"><div style="width:' + progress + '%"></div></div></div>';
+    return header;
+  }
+
+  function progressPercent() {
+    var total = data.days.length || 1;
+    var done = data.days.filter(function (d) { return state.completed[d.id]; }).length;
+    return Math.round((done / total) * 100);
+  }
+
+  function homeHtml(day) {
+    var clears = state.clears[day.id];
+    var completed = state.completed[day.id];
+    var next = data.days[currentDayIndex + 1];
+    var status = completed ? 'CLEAR：次のDayが解放されています。' : 'Listening / Quiz / Flashcard をすべてCLEARすると次のDayが解放されます。';
+    return '' +
+      '<section class="card current-card">' +
+        '<div class="badge">' + h(day.words.length) + ' words</div>' +
+        '<h2>今日の海域</h2>' +
+        '<p>' + h(status) + '</p>' +
+        '<div class="clear-grid">' +
+          clearPill('Listening', clears.listening) +
+          clearPill('Quiz', clears.quiz) +
+          clearPill('Flashcard', clears.flashcard) +
+        '</div>' +
+      '</section>' +
+      '<section class="mode-grid">' +
+        modeCard('listening', '🔊', '音声 → 日本語4択', '英単語を聞いて意味を即時想起します。') +
+        modeCard('quiz', '📝', '英語 → 日本語4択', '語の意味を正確に確認します。') +
+        modeCard('flashcard', '🌊', 'Flashcard', '例文・語源・意味を確認します。') +
+      '</section>' +
+      '<section class="card day-list-card"><h2>Day選択</h2><div class="day-list">' + dayButtonsHtml() + '</div></section>' +
+      (next && completed ? '<button class="primary wide" data-action="nextDay">Day ' + h(next.day) + 'へ進む</button>' : '');
+  }
+
+  function clearPill(label, ok) {
+    return '<div class="clear-pill ' + (ok ? 'is-clear' : '') + '"><span>' + h(label) + '</span><strong>' + (ok ? 'CLEAR' : '未完了') + '</strong></div>';
+  }
+
+  function modeCard(mode, icon, title, desc) {
+    return '<button class="mode-card" data-action="mode" data-mode="' + mode + '"><span class="mode-icon">' + icon + '</span><strong>' + h(title) + '</strong><small>' + h(desc) + '</small></button>';
+  }
+
+  function dayButtonsHtml() {
+    return data.days.map(function (day, index) {
+      var unlocked = !!state.unlocked[day.id];
+      var active = index === currentDayIndex;
+      var done = !!state.completed[day.id];
+      return '<button class="day-button ' + (active ? 'active ' : '') + (done ? 'done ' : '') + '" data-action="selectDay" data-index="' + index + '" ' + (unlocked ? '' : 'disabled') + '>' +
+        '<span>Day ' + h(day.day) + '</span><small>' + (unlocked ? (done ? 'CLEAR' : 'OPEN') : 'LOCK') + '</small></button>';
+    }).join('');
+  }
+
+  function modeIntroHtml(day, mode) {
+    var title = mode === 'listening' ? '音声 → 日本語4択' : '英語 → 日本語4択';
+    var lead = mode === 'listening' ? '再生ボタンで単語を聞き、日本語の意味を選びます。' : '表示された英単語に合う日本語の意味を選びます。';
+    return '<section class="card quiz-start"><h2>' + h(title) + '</h2><p>' + h(lead) + '</p><button class="primary wide" data-action="startQuiz" data-mode="' + mode + '">Start</button></section>';
+  }
+
+  function flashcardHtml(day, index, flipped) {
+    var safeIndex = Math.max(0, Math.min(index, day.words.length - 1));
+    var word = day.words[safeIndex];
+    var clear = state.clears[day.id].flashcard;
+    return '' +
+      '<section class="flash-wrap" data-card-index="' + safeIndex + '" data-flipped="' + (flipped ? '1' : '0') + '">' +
+        '<div class="flash-counter">' + (safeIndex + 1) + ' / ' + day.words.length + '</div>' +
+        '<button class="flash-card" data-action="flip">' +
+          (!flipped ? '<span class="word-main">' + h(word.word) + '</span><span class="pos">' + h(word.pos || '') + '</span><small>タップして意味を見る</small>' :
+          '<span class="meaning-main">' + h(word.meaning) + '</span><p>' + h(word.example || '') + '</p><p class="translation">' + h(word.translation || '') + '</p><small>' + h(word.root || '') + '</small>') +
+        '</button>' +
+        '<div class="flash-controls">' +
+          '<button class="secondary" data-action="prevCard" ' + (safeIndex === 0 ? 'disabled' : '') + '>前へ</button>' +
+          '<button class="secondary" data-action="speak" data-word="' + h(word.word) + '">音声</button>' +
+          (safeIndex < day.words.length - 1 ? '<button class="primary" data-action="nextCard">次へ</button>' : '<button class="primary" data-action="clearFlash">Flashcard CLEAR</button>') +
+        '</div>' +
+        (clear ? '<p class="clear-message">Flashcard CLEAR済みです。</p>' : '') +
+      '</section>';
+  }
+
+  function buildBottomNav() {
+    var nav = document.createElement('nav');
+    nav.className = 'bottom-nav';
+    nav.innerHTML =
+      '<button data-action="home" class="' + (currentMode === 'home' ? 'active' : '') + '">Home</button>' +
+      '<button data-action="mode" data-mode="listening" class="' + (currentMode === 'listening' ? 'active' : '') + '">Listen</button>' +
+      '<button data-action="mode" data-mode="quiz" class="' + (currentMode === 'quiz' ? 'active' : '') + '">Quiz</button>' +
+      '<button data-action="mode" data-mode="flashcard" class="' + (currentMode === 'flashcard' ? 'active' : '') + '">Cards</button>';
+    return nav;
+  }
+
+  function bindEvents() {
+    app.querySelectorAll('[data-action]').forEach(function (el) {
+      el.addEventListener('click', handleAction);
     });
   }
 
-  // Day1 must always be available.
-  const firstDayId = getAllDayIds()[0];
-  if (firstDayId) normalized.unlockedDays[firstDayId] = true;
+  function handleAction(event) {
+    var target = event.currentTarget;
+    var action = target.getAttribute('data-action');
+    if (action === 'home') { currentMode = 'home'; render(); }
+    if (action === 'mode') { currentMode = target.getAttribute('data-mode') || 'home'; quiz = null; render(); }
+    if (action === 'selectDay') selectDay(Number(target.getAttribute('data-index')));
+    if (action === 'startQuiz') startQuiz(target.getAttribute('data-mode'));
+    if (action === 'answer') answerQuiz(Number(target.getAttribute('data-choice')));
+    if (action === 'nextQuestion') nextQuestion();
+    if (action === 'speak') speak(target.getAttribute('data-word') || '');
+    if (action === 'flip') flipCard();
+    if (action === 'prevCard') moveCard(-1);
+    if (action === 'nextCard') moveCard(1);
+    if (action === 'clearFlash') clearMode('flashcard');
+    if (action === 'nextDay') nextDay();
+    if (action === 'reset') resetProgress();
+  }
 
-  // If a day is completed, it must be unlocked, and the next day must be unlocked.
-  getAllDayIds().forEach((dayId, index, dayIds) => {
-    if (normalized.completedDays[dayId]) {
-      normalized.unlockedDays[dayId] = true;
-      const nextDayId = dayIds[index + 1];
-      if (nextDayId) normalized.unlockedDays[nextDayId] = true;
+  function selectDay(index) {
+    var day = data.days[index];
+    if (!day || !state.unlocked[day.id]) return;
+    currentDayIndex = index;
+    currentMode = 'home';
+    quiz = null;
+    render();
+  }
+
+  function startQuiz(mode) {
+    var day = currentDay();
+    quiz = { mode: mode, order: shuffle(day.words.map(function (_, i) { return i; })), pos: 0, score: 0, locked: false, selected: -1 };
+    renderQuizQuestion();
+  }
+
+  function renderQuizQuestion() {
+    var day = currentDay();
+    var main = app.querySelector('.main');
+    if (!main || !quiz) return;
+    var word = day.words[quiz.order[quiz.pos]];
+    var choices = makeChoices(word, day.words);
+    quiz.correctChoice = choices.indexOf(word.meaning);
+    main.innerHTML = '' +
+      '<section class="card quiz-card">' +
+        '<div class="flash-counter">' + (quiz.pos + 1) + ' / ' + quiz.order.length + '</div>' +
+        (quiz.mode === 'listening' ? '<button class="sound-button" data-action="speak" data-word="' + h(word.word) + '">🔊 音声を再生</button><p class="hint">聞こえた英単語の意味を選んでください。</p>' : '<h2 class="quiz-word">' + h(word.word) + '</h2><p class="hint">この英単語の意味を選んでください。</p>') +
+        '<div class="choices">' + choices.map(function (choice, i) { return '<button class="choice" data-action="answer" data-choice="' + i + '">' + h(choice) + '</button>'; }).join('') + '</div>' +
+      '</section>';
+    bindEvents();
+    if (quiz.mode === 'listening') setTimeout(function () { speak(word.word); }, 250);
+  }
+
+  function makeChoices(correctWord, words) {
+    var meanings = words.map(function (w) { return w.meaning; }).filter(function (m) { return m && m !== correctWord.meaning; });
+    var extras = ['構造', '分類', '証拠／根拠', '抽象的な／抽出する', '変化', '比較する'].filter(function (m) { return m !== correctWord.meaning; });
+    var pool = shuffle(meanings.concat(extras));
+    var choices = [correctWord.meaning];
+    pool.forEach(function (m) {
+      if (choices.length < 4 && choices.indexOf(m) === -1) choices.push(m);
+    });
+    return shuffle(choices);
+  }
+
+  function answerQuiz(choiceIndex) {
+    if (!quiz || quiz.locked) return;
+    quiz.locked = true;
+    quiz.selected = choiceIndex;
+    if (choiceIndex === quiz.correctChoice) quiz.score += 1;
+    var buttons = app.querySelectorAll('.choice');
+    buttons.forEach(function (button, i) {
+      button.disabled = true;
+      if (i === quiz.correctChoice) button.classList.add('correct');
+      if (i === choiceIndex && i !== quiz.correctChoice) button.classList.add('wrong');
+    });
+    var card = app.querySelector('.quiz-card');
+    var result = document.createElement('div');
+    result.className = 'result-box';
+    result.innerHTML = (choiceIndex === quiz.correctChoice ? '<strong>Correct!</strong>' : '<strong>Review!</strong>') +
+      '<button class="primary wide" data-action="nextQuestion">' + (quiz.pos < quiz.order.length - 1 ? '次の問題へ' : '結果を見る') + '</button>';
+    card.appendChild(result);
+    bindEvents();
+  }
+
+  function nextQuestion() {
+    if (!quiz) return;
+    if (quiz.pos < quiz.order.length - 1) {
+      quiz.pos += 1;
+      quiz.locked = false;
+      renderQuizQuestion();
+    } else {
+      finishQuiz();
     }
-  });
-
-  return normalized;
-}
-
-function loadProgressState() {
-  const stored = safeParse(localStorage.getItem(PROGRESS_KEY), null);
-  const normalized = normalizeProgressState(stored);
-  saveProgressState(normalized);
-  return normalized;
-}
-
-function saveProgressState(state) {
-  state.updatedAt = new Date().toISOString();
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(state));
-}
-
-function getProgressState() {
-  return loadProgressState();
-}
-
-function completeActivity(dayId, activityName, options = { renderAfter: true }) {
-  const state = getProgressState();
-  if (!state.activityCompletion[dayId]) {
-    state.activityCompletion[dayId] = { listening: false, flashcard: false };
   }
 
-  state.activityCompletion[dayId][activityName] = true;
-
-  const activities = state.activityCompletion[dayId];
-  if (activities.listening && activities.flashcard) {
-    completeDay(dayId, state);
-    return;
+  function finishQuiz() {
+    var mode = quiz.mode;
+    var score = quiz.score;
+    var total = quiz.order.length;
+    var passed = score === total;
+    var main = app.querySelector('.main');
+    if (passed) clearMode(mode, true);
+    main.innerHTML = '<section class="card result-card"><h2>' + (passed ? 'CLEAR!' : 'もう一度挑戦') + '</h2><p>Score: ' + score + ' / ' + total + '</p><p>' + (passed ? 'このモードはCLEARです。' : '全問正解でCLEARになります。') + '</p><button class="primary wide" data-action="' + (passed ? 'home' : 'startQuiz') + '" data-mode="' + h(mode) + '">' + (passed ? 'Homeへ戻る' : '再挑戦') + '</button></section>';
+    quiz = null;
+    bindEvents();
   }
 
-  saveProgressState(state);
-  if (options.renderAfter) render();
-}
-
-function completeDay(dayId, existingState = null) {
-  const state = existingState || getProgressState();
-  const dayIds = getAllDayIds();
-  const index = dayIds.indexOf(dayId);
-  if (index === -1) return;
-
-  state.completedDays[dayId] = true;
-  state.unlockedDays[dayId] = true;
-
-  const nextDayId = dayIds[index + 1];
-  if (nextDayId) {
-    state.unlockedDays[nextDayId] = true;
-    activeDayId = nextDayId;
-    localStorage.setItem(ACTIVE_DAY_KEY, nextDayId);
-  }
-
-  saveProgressState(state);
-  renderCompletionModal(dayId, nextDayId);
-}
-
-function isDayUnlocked(dayId) {
-  return Boolean(getProgressState().unlockedDays[dayId]);
-}
-
-function isDayCompleted(dayId) {
-  return Boolean(getProgressState().completedDays[dayId]);
-}
-
-function getWeakWords() {
-  const list = safeParse(localStorage.getItem(WEAK_KEY), []);
-  return Array.isArray(list) ? list : [];
-}
-
-function saveWeakWords(list) {
-  const unique = [];
-  const seen = new Set();
-  list.forEach((item) => {
-    if (!item?.word || seen.has(item.word)) return;
-    seen.add(item.word);
-    unique.push(item);
-  });
-  localStorage.setItem(WEAK_KEY, JSON.stringify(unique));
-}
-
-function addWeakWord(wordItem, dayId) {
-  const list = getWeakWords();
-  saveWeakWords([
-    ...list.filter((item) => item.word !== wordItem.word),
-    {
-      word: wordItem.word,
-      meaning: wordItem.meaning,
-      example: wordItem.example,
-      translation: wordItem.translation,
-      root: wordItem.root,
-      dayId,
-      addedAt: new Date().toISOString()
-    }
-  ]);
-}
-
-function removeWeakWord(word) {
-  saveWeakWords(getWeakWords().filter((item) => item.word !== word));
-}
-
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-US';
-  utterance.rate = 0.86;
-  utterance.pitch = 1.0;
-  window.speechSynthesis.speak(utterance);
-}
-
-function shuffle(array) {
-  const copy = [...array];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function buildMeaningOptions(correctWord, allWords) {
-  const distractors = shuffle(allWords.filter((item) => item.word !== correctWord.word))
-    .slice(0, 3)
-    .map((item) => item.meaning);
-  return shuffle([correctWord.meaning, ...distractors]);
-}
-
-function initializeQuiz(dayId, mode = 'listening') {
-  const day = getDayById(dayId);
-  const words = shuffle(day.words);
-  quizState = {
-    mode,
-    dayId,
-    words,
-    index: 0,
-    correct: 0,
-    answered: false,
-    selected: null,
-    timeLeft: 10,
-    timerId: null,
-    options: []
-  };
-  renderQuiz();
-}
-
-function clearQuizTimer() {
-  if (quizState?.timerId) {
-    clearInterval(quizState.timerId);
-    quizState.timerId = null;
-  }
-}
-
-function startQuizTimer() {
-  clearQuizTimer();
-  if (!quizState || quizState.answered) return;
-  quizState.timeLeft = 10;
-  quizState.timerId = setInterval(() => {
-    quizState.timeLeft -= 1;
-    const timerEl = $('#timerValue');
-    if (timerEl) timerEl.textContent = String(quizState.timeLeft);
-    if (quizState.timeLeft <= 0) {
-      answerQuiz(null);
-    }
-  }, 1000);
-}
-
-function answerQuiz(selectedMeaning) {
-  if (!quizState || quizState.answered) return;
-  clearQuizTimer();
-  const current = quizState.words[quizState.index];
-  const isCorrect = selectedMeaning === current.meaning;
-  quizState.answered = true;
-  quizState.selected = selectedMeaning;
-  if (isCorrect) {
-    quizState.correct += 1;
-    playSuccessSound();
-  } else {
-    addWeakWord(current, quizState.dayId);
-  }
-  renderQuiz();
-}
-
-function nextQuizQuestion() {
-  if (!quizState) return;
-  if (quizState.index >= quizState.words.length - 1) {
-    clearQuizTimer();
-    const passed = quizState.correct === quizState.words.length;
-    renderQuizResult(passed);
-    return;
-  }
-  quizState.index += 1;
-  quizState.answered = false;
-  quizState.selected = null;
-  quizState.options = [];
-  renderQuiz();
-}
-
-function playSuccessSound() {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(660, ctx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-    oscillator.connect(gain).connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.2);
-  } catch (_error) {
-    // Sound is optional.
-  }
-}
-
-function setView(viewName) {
-  clearQuizTimer();
-  activeView = viewName;
-  localStorage.setItem(ACTIVE_VIEW_KEY, viewName);
-  navButtons.forEach((button) => button.classList.toggle('active', button.dataset.nav === viewName));
-  if (viewName === 'reset') {
-    renderReset();
-    return;
-  }
-  render();
-}
-
-function setActiveDay(dayId) {
-  if (!isDayUnlocked(dayId)) return;
-  activeDayId = dayId;
-  localStorage.setItem(ACTIVE_DAY_KEY, dayId);
-  activeView = 'home';
-  localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-  render();
-}
-
-function updateLevelBadge() {
-  const state = getProgressState();
-  const completed = Object.values(state.completedDays).filter(Boolean).length;
-  levelBadge.textContent = `Lv.${Math.max(1, completed + 1)}`;
-}
-
-function render() {
-  updateLevelBadge();
-  navButtons.forEach((button) => button.classList.toggle('active', button.dataset.nav === activeView));
-
-  if (activeView === 'map') return renderMap();
-  if (activeView === 'cards') return renderCards();
-  if (activeView === 'weak') return renderWeakWords();
-  return renderHome();
-}
-
-function renderHome() {
-  const day = getDayById(activeDayId);
-  const state = getProgressState();
-  const activities = state.activityCompletion[day.id] || { listening: false, flashcard: false };
-  const progressPercent = Math.round((Object.values(state.completedDays).filter(Boolean).length / getAllDayIds().length) * 100);
-
-  app.innerHTML = `
-    <section class="hero-card">
-      <div class="shark-large">🦈</div>
-      <div>
-        <p class="eyebrow">${vocabularyData.unit.title}</p>
-        <h2>${day.title}</h2>
-        <p>${day.theme}</p>
-        <p class="core-question">${vocabularyData.unit.coreQuestion}</p>
-      </div>
-    </section>
-
-    <section class="progress-card">
-      <div class="section-title-row">
-        <h3>Perception Sea Progress</h3>
-        <span>${progressPercent}%</span>
-      </div>
-      <div class="progress-bar"><div style="width:${progressPercent}%"></div></div>
-      <div class="activity-grid">
-        <div class="activity-pill ${activities.listening ? 'done' : ''}">🎧 Listening ${activities.listening ? 'CLEAR' : '未完了'}</div>
-        <div class="activity-pill ${activities.flashcard ? 'done' : ''}">📚 Flashcard ${activities.flashcard ? 'CLEAR' : '未完了'}</div>
-      </div>
-      <p class="note">Day解放はこの2つのCLEARだけで判定します。Weak Wordsとは完全に独立しています。</p>
-    </section>
-
-    <section class="action-grid">
-      <button class="primary-card" id="startListening">
-        <span>🎧</span>
-        <strong>音声 → 日本語4択</strong>
-        <small>1問10秒。全問正解でCLEAR。</small>
-      </button>
-      <button class="primary-card" id="startCards">
-        <span>📚</span>
-        <strong>今日のカード学習</strong>
-        <small>最後まで確認するとCLEAR。</small>
-      </button>
-    </section>
-
-    <section class="word-list-card">
-      <h3>Today's Words</h3>
-      <div class="word-chip-list">
-        ${day.words.map((item) => `<button class="word-chip" data-speak="${item.word}">${item.word}<small>${item.meaning}</small></button>`).join('')}
-      </div>
-    </section>
-  `;
-
-  $('#startListening')?.addEventListener('click', () => initializeQuiz(day.id, 'listening'));
-  $('#startCards')?.addEventListener('click', () => {
-    cardState = { index: 0, flipped: false };
-    activeView = 'cards';
-    localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-    renderCards();
-  });
-  $$('[data-speak]').forEach((button) => button.addEventListener('click', () => speak(button.dataset.speak)));
-}
-
-function renderMap() {
-  const state = getProgressState();
-  app.innerHTML = `
-    <section class="panel-card">
-      <h2>Day Map</h2>
-      <p class="muted">progression専用stateだけを参照して表示しています。</p>
-      <div class="day-map">
-        ${vocabularyData.days.map((day) => {
-          const unlocked = Boolean(state.unlockedDays[day.id]);
-          const completed = Boolean(state.completedDays[day.id]);
-          return `
-            <button class="day-node ${unlocked ? 'unlocked' : 'locked'} ${completed ? 'completed' : ''}" data-day-id="${day.id}" ${unlocked ? '' : 'disabled'}>
-              <span>${completed ? '✅' : unlocked ? '🌊' : '🔒'}</span>
-              <strong>Day ${day.day}</strong>
-              <small>${day.title.replace(/^Day \d+:\s*/, '')}</small>
-            </button>
-          `;
-        }).join('')}
-      </div>
-    </section>
-  `;
-  $$('[data-day-id]').forEach((button) => button.addEventListener('click', () => setActiveDay(button.dataset.dayId)));
-}
-
-function renderCards() {
-  const day = getDayById(activeDayId);
-  const word = day.words[cardState.index] || day.words[0];
-  const total = day.words.length;
-
-  app.innerHTML = `
-    <section class="panel-card">
-      <div class="section-title-row">
-        <div>
-          <p class="eyebrow">${day.title}</p>
-          <h2>Flashcard</h2>
-        </div>
-        <span>${cardState.index + 1}/${total}</span>
-      </div>
-
-      <button class="flashcard ${cardState.flipped ? 'flipped' : ''}" id="flipCard">
-        <div class="front">
-          <span class="card-label">WORD</span>
-          <strong>${word.word}</strong>
-          <small>タップして意味を確認</small>
-        </div>
-        <div class="back">
-          <span class="card-label">MEANING</span>
-          <strong>${word.meaning}</strong>
-          <p>${word.example}</p>
-          <p class="translation">${word.translation}</p>
-          <p class="root">${word.root}</p>
-        </div>
-      </button>
-
-      <div class="button-row">
-        <button class="secondary-btn" id="speakWord">🔊 発音</button>
-        <button class="secondary-btn" id="prevCard" ${cardState.index === 0 ? 'disabled' : ''}>前へ</button>
-        <button class="primary-btn" id="nextCard">${cardState.index >= total - 1 ? 'CLEAR' : '次へ'}</button>
-      </div>
-    </section>
-  `;
-
-  $('#flipCard')?.addEventListener('click', () => {
-    cardState.flipped = !cardState.flipped;
-    renderCards();
-  });
-  $('#speakWord')?.addEventListener('click', () => speak(word.word));
-  $('#prevCard')?.addEventListener('click', () => {
-    cardState.index = Math.max(0, cardState.index - 1);
-    cardState.flipped = false;
-    renderCards();
-  });
-  $('#nextCard')?.addEventListener('click', () => {
-    if (cardState.index >= total - 1) {
-      completeActivity(day.id, 'flashcard');
-      activeView = 'home';
-      localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
+  function clearMode(mode, silent) {
+    var day = currentDay();
+    if (!state.clears[day.id]) state.clears[day.id] = { listening: false, quiz: false, flashcard: false };
+    state.clears[day.id][mode] = true;
+    applyUnlockRules(state, data);
+    saveState();
+    if (!silent) {
+      currentMode = 'home';
       render();
-      return;
     }
-    cardState.index += 1;
-    cardState.flipped = false;
-    renderCards();
-  });
-}
-
-function renderQuiz() {
-  const day = getDayById(quizState.dayId);
-  const current = quizState.words[quizState.index];
-  if (!quizState.options || quizState.options.length === 0 || !quizState.answered) {
-    quizState.options = buildMeaningOptions(current, day.words);
   }
-  const options = quizState.options;
 
-  app.innerHTML = `
-    <section class="panel-card quiz-card">
-      <div class="section-title-row">
-        <div>
-          <p class="eyebrow">${day.title}</p>
-          <h2>音声 → 日本語4択</h2>
-        </div>
-        <span>Q${quizState.index + 1}/${quizState.words.length}</span>
-      </div>
-
-      <div class="timer-pill">残り <strong id="timerValue">${quizState.timeLeft}</strong> 秒</div>
-      <button class="audio-orb" id="playAudio">🔊</button>
-      <p class="muted">音声を聞いて、日本語の意味を選んでください。</p>
-
-      <div class="option-grid">
-        ${options.map((option) => {
-          let cls = '';
-          if (quizState.answered && option === current.meaning) cls = 'correct';
-          if (quizState.answered && option === quizState.selected && option !== current.meaning) cls = 'wrong';
-          return `<button class="option-btn ${cls}" data-option="${option}" ${quizState.answered ? 'disabled' : ''}>${option}</button>`;
-        }).join('')}
-      </div>
-
-      ${quizState.answered ? `
-        <div class="answer-box ${quizState.selected === current.meaning ? 'success' : 'fail'}">
-          <strong>${quizState.selected === current.meaning ? '正解！' : 'Weak Wordsに追加しました'}</strong>
-          <p>${current.word} = ${current.meaning}</p>
-          <p>${current.example}</p>
-        </div>
-        <button class="primary-btn full" id="nextQuestion">${quizState.index >= quizState.words.length - 1 ? '結果を見る' : '次へ'}</button>
-      ` : ''}
-    </section>
-  `;
-
-  $('#playAudio')?.addEventListener('click', () => speak(current.word));
-  $$('.option-btn').forEach((button) => button.addEventListener('click', () => answerQuiz(button.dataset.option)));
-  $('#nextQuestion')?.addEventListener('click', nextQuizQuestion);
-
-  if (!quizState.answered) {
-    speak(current.word);
-    startQuizTimer();
+  function nextDay() {
+    var next = data.days[currentDayIndex + 1];
+    if (!next || !state.unlocked[next.id]) return;
+    currentDayIndex += 1;
+    currentMode = 'home';
+    render();
   }
-}
 
-function renderQuizResult(passed) {
-  const day = getDayById(quizState.dayId);
-  app.innerHTML = `
-    <section class="panel-card result-card">
-      <div class="shark-large">${passed ? '🦈✨' : '🦈💧'}</div>
-      <h2>${passed ? 'Listening CLEAR!' : 'もう一度挑戦しましょう'}</h2>
-      <p>${quizState.correct}/${quizState.words.length} correct</p>
-      <p class="muted">全問正解でListening CLEARです。間違えた単語はWeak Wordsに保存されました。</p>
-      <div class="button-row">
-        <button class="secondary-btn" id="backHome">Homeへ</button>
-        <button class="primary-btn" id="retryQuiz">再挑戦</button>
-      </div>
-    </section>
-  `;
-
-  $('#backHome')?.addEventListener('click', () => {
-    activeView = 'home';
-    localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-    quizState = null;
+  function resetProgress() {
+    var ok = confirm('学習進行をリセットしますか？ Weak Words機能はこの復旧版には含まれていません。');
+    if (!ok) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    state = defaultState(data);
+    currentDayIndex = 0;
+    currentMode = 'home';
+    quiz = null;
+    saveState();
     render();
-  });
-  $('#retryQuiz')?.addEventListener('click', () => initializeQuiz(day.id, 'listening'));
-
-  if (passed) {
-    const dayId = quizState.dayId;
-    quizState = null;
-    completeActivity(dayId, 'listening', { renderAfter: false });
   }
-}
 
-function renderWeakWords() {
-  const weakWords = getWeakWords();
-  app.innerHTML = `
-    <section class="panel-card">
-      <div class="section-title-row">
-        <div>
-          <p class="eyebrow">Independent Review</p>
-          <h2>Weak Words</h2>
-        </div>
-        <span>${weakWords.length}</span>
-      </div>
-      <p class="muted">Weak Wordsはprogression stateに一切混ぜていません。復習してもDay解放条件には影響しません。</p>
-      ${weakWords.length === 0 ? `
-        <div class="empty-state">⭐<p>まだWeak Wordsはありません。</p></div>
-      ` : `
-        <div class="weak-list">
-          ${weakWords.map((item) => `
-            <article class="weak-item">
-              <div>
-                <strong>${item.word}</strong>
-                <p>${item.meaning}</p>
-                <small>${item.example || ''}</small>
-              </div>
-              <div class="weak-actions">
-                <button class="icon-btn" data-speak-weak="${item.word}">🔊</button>
-                <button class="icon-btn" data-remove-weak="${item.word}">CLEAR</button>
-              </div>
-            </article>
-          `).join('')}
-        </div>
-      `}
-    </section>
-  `;
-
-  $$('[data-speak-weak]').forEach((button) => button.addEventListener('click', () => speak(button.dataset.speakWeak)));
-  $$('[data-remove-weak]').forEach((button) => button.addEventListener('click', () => {
-    removeWeakWord(button.dataset.removeWeak);
-    renderWeakWords();
-  }));
-}
-
-function renderReset() {
-  app.innerHTML = `
-    <section class="panel-card danger-zone">
-      <h2>Reset</h2>
-      <p>進行状態だけ、またはWeak Wordsだけを個別にリセットできます。</p>
-      <div class="button-column">
-        <button class="secondary-btn" id="resetProgress">Progressionだけリセット</button>
-        <button class="secondary-btn" id="resetWeak">Weak Wordsだけリセット</button>
-        <button class="danger-btn" id="resetAll">すべてリセット</button>
-        <button class="primary-btn" id="cancelReset">戻る</button>
-      </div>
-    </section>
-  `;
-
-  $('#resetProgress')?.addEventListener('click', () => {
-    localStorage.removeItem(PROGRESS_KEY);
-    localStorage.removeItem(ACTIVE_DAY_KEY);
-    activeDayId = getAllDayIds()[0];
-    activeView = 'home';
-    localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-    render();
-  });
-  $('#resetWeak')?.addEventListener('click', () => {
-    localStorage.removeItem(WEAK_KEY);
-    activeView = 'weak';
-    localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-    renderWeakWords();
-  });
-  $('#resetAll')?.addEventListener('click', () => {
-    localStorage.removeItem(PROGRESS_KEY);
-    localStorage.removeItem(WEAK_KEY);
-    localStorage.removeItem(ACTIVE_DAY_KEY);
-    localStorage.removeItem(ACTIVE_VIEW_KEY);
-    activeDayId = getAllDayIds()[0];
-    activeView = 'home';
-    render();
-  });
-  $('#cancelReset')?.addEventListener('click', () => {
-    activeView = 'home';
-    localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-    render();
-  });
-}
-
-function renderCompletionModal(dayId, nextDayId) {
-  const completedDay = getDayById(dayId);
-  activeView = 'home';
-  localStorage.setItem(ACTIVE_VIEW_KEY, activeView);
-  app.innerHTML = `
-    <section class="panel-card result-card">
-      <div class="shark-large">🦈🏆</div>
-      <h2>${completedDay.title} CLEAR!</h2>
-      <p>${nextDayId ? `Day ${getDayById(nextDayId).day} を解放しました。` : 'Unit 1の現在収録分を完了しました。'}</p>
-      <p class="muted">リロード後も、この解放状態は progression専用state に保存されます。</p>
-      <button class="primary-btn full" id="continueAfterClear">続ける</button>
-    </section>
-  `;
-  $('#continueAfterClear')?.addEventListener('click', () => render());
-}
-
-async function boot() {
-  try {
-    const response = await fetch(DATA_URL, { cache: 'no-store' });
-    if (!response.ok) throw new Error('vocabulary.json could not be loaded.');
-    vocabularyData = await response.json();
-
-    const state = getProgressState();
-    const storedDay = localStorage.getItem(ACTIVE_DAY_KEY);
-    const firstUnlockedDay = getAllDayIds().find((dayId) => state.unlockedDays[dayId]) || getAllDayIds()[0];
-    activeDayId = storedDay && state.unlockedDays[storedDay] ? storedDay : firstUnlockedDay;
-
-    const storedView = localStorage.getItem(ACTIVE_VIEW_KEY);
-    activeView = ['home', 'map', 'cards', 'weak'].includes(storedView) ? storedView : 'home';
-
-    navButtons.forEach((button) => button.addEventListener('click', () => setView(button.dataset.nav)));
-    render();
-  } catch (error) {
-    app.innerHTML = `
-      <section class="panel-card danger-zone">
-        <h2>読み込みエラー</h2>
-        <p>vocabulary.json を読み込めませんでした。</p>
-        <pre>${String(error.message || error)}</pre>
-      </section>
-    `;
+  function speak(text) {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('speech failed', e);
+    }
   }
-}
 
-boot();
+  function flipCard() {
+    var wrap = app.querySelector('.flash-wrap');
+    if (!wrap) return;
+    var index = Number(wrap.getAttribute('data-card-index')) || 0;
+    var flipped = wrap.getAttribute('data-flipped') === '1';
+    var main = app.querySelector('.main');
+    main.innerHTML = flashcardHtml(currentDay(), index, !flipped);
+    bindEvents();
+  }
+
+  function moveCard(delta) {
+    var wrap = app.querySelector('.flash-wrap');
+    if (!wrap) return;
+    var index = Number(wrap.getAttribute('data-card-index')) || 0;
+    var main = app.querySelector('.main');
+    main.innerHTML = flashcardHtml(currentDay(), index + delta, false);
+    bindEvents();
+  }
+
+  function shuffle(arr) {
+    var copy = arr.slice();
+    for (var i = copy.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  function renderErrorNotice(message) {
+    render();
+    var main = app.querySelector('.main');
+    var notice = document.createElement('section');
+    notice.className = 'card warning';
+    notice.textContent = message;
+    main.insertBefore(notice, main.firstChild);
+  }
+
+  window.addEventListener('error', function (event) {
+    console.error('App error:', event.error || event.message);
+    if (app) {
+      app.innerHTML = '<main class="main"><section class="card warning"><h1>起動エラーを検出しました</h1><p>app.jsの実行中にエラーが発生しました。ブラウザを再読み込みしてください。</p><p class="mono">' + h(event.message || '') + '</p></section></main>';
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

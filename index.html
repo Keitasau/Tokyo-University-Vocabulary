@@ -1,44 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Academic Vocabulary Network Adventure</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="ocean-bg" aria-hidden="true">
-    <span class="bubble b1"></span>
-    <span class="bubble b2"></span>
-    <span class="bubble b3"></span>
-    <span class="bubble b4"></span>
-  </div>
-
-  <header class="app-header">
-    <div>
-      <p class="eyebrow">Tokyo University Vocabulary</p>
-      <h1>Academic Vocabulary Network</h1>
-      <p class="subtitle">Deep Sea of Thought</p>
-    </div>
-    <div class="level-badge" id="levelBadge">Lv.1</div>
-  </header>
-
-  <main id="app" class="app-shell">
-    <section class="loading-card">
+  <div id="app" class="app-shell">
+    <div class="loading-card">
       <div class="shark">🦈</div>
-      <h2>Loading...</h2>
-      <p>このアプリを使うにはJavaScriptを有効にしてください。</p>
-    </section>
-  </main>
-
-  <nav class="bottom-nav" aria-label="Main navigation">
-    <button type="button" data-nav="home" class="nav-btn active">🏠<span>Home</span></button>
-    <button type="button" data-nav="map" class="nav-btn">🗺️<span>Map</span></button>
-    <button type="button" data-nav="cards" class="nav-btn">📚<span>Cards</span></button>
-    <button type="button" data-nav="weak" class="nav-btn">⭐<span>Weak</span></button>
-    <button type="button" data-nav="reset" class="nav-btn danger">↺<span>Reset</span></button>
-  </nav>
-
+      <h1>Loading...</h1>
+      <p>東京大学英語 Academic Vocabulary Network を起動しています。</p>
+    </div>
+  </div>
+  <noscript>
+    <div class="noscript">このアプリを使うにはJavaScriptを有効にしてください。</div>
+  </noscript>
   <script src="app.js"></script>
 </body>
 </html>

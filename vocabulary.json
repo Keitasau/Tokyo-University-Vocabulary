@@ -18,10 +18,7 @@
           "pos": "noun",
           "example": "Our perception of reality is shaped by language and memory.",
           "translation": "私たちの現実認識は、言語や記憶によって形作られる。",
-          "root": "per- + ceive = completely take in",
-          "tags": ["cognition", "academic"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "per- + ceive = completely take in"
         },
         {
           "word": "represent",
@@ -29,10 +26,7 @@
           "pos": "verb",
           "example": "A graph can represent complex information in a simple form.",
           "translation": "グラフは複雑な情報を単純な形で表すことができる。",
-          "root": "re- + present = present again",
-          "tags": ["representation", "logic"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "re- + present = present again"
         },
         {
           "word": "interpret",
@@ -40,10 +34,7 @@
           "pos": "verb",
           "example": "Readers interpret the same text in different ways.",
           "translation": "読者は同じ文章を異なる方法で解釈する。",
-          "root": "inter- + pret = explain between",
-          "tags": ["reading", "meaning"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "inter- + pret = explain between"
         },
         {
           "word": "assumption",
@@ -51,10 +42,7 @@
           "pos": "noun",
           "example": "The argument depends on a hidden assumption.",
           "translation": "その議論は隠れた前提に依存している。",
-          "root": "as- + sumere = take up",
-          "tags": ["logic", "argument"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "as- + sumere = take up"
         },
         {
           "word": "framework",
@@ -62,10 +50,7 @@
           "pos": "noun",
           "example": "This framework helps us compare different theories.",
           "translation": "この枠組みは異なる理論を比較するのに役立つ。",
-          "root": "frame + work = supporting structure",
-          "tags": ["theory", "academic"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "frame + work = supporting structure"
         }
       ]
     },
@@ -81,10 +66,7 @@
           "pos": "noun",
           "example": "The claim is weak because there is little evidence to support it.",
           "translation": "その主張を支える証拠がほとんどないため、その主張は弱い。",
-          "root": "e- + videre = clearly seen",
-          "tags": ["argument", "research"],
-          "difficulty": "B1",
-          "frequency": "high"
+          "root": "e- + videre = clearly seen"
         },
         {
           "word": "infer",
@@ -92,10 +74,7 @@
           "pos": "verb",
           "example": "We can infer the writer's position from the final paragraph.",
           "translation": "最後の段落から筆者の立場を推論できる。",
-          "root": "in- + ferre = carry into",
-          "tags": ["logic", "reading"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "in- + ferre = carry into"
         },
         {
           "word": "indicate",
@@ -103,10 +82,7 @@
           "pos": "verb",
           "example": "The data indicate a change in public attitudes.",
           "translation": "そのデータは世論の変化を示している。",
-          "root": "in- + dicare = point out",
-          "tags": ["data", "academic"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "in- + dicare = point out"
         },
         {
           "word": "distinguish",
@@ -114,10 +90,7 @@
           "pos": "verb",
           "example": "It is important to distinguish fact from opinion.",
           "translation": "事実と意見を区別することが重要である。",
-          "root": "dis- + stinguere = mark apart",
-          "tags": ["critical thinking"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "dis- + stinguere = mark apart"
         },
         {
           "word": "context",
@@ -125,10 +98,7 @@
           "pos": "noun",
           "example": "The meaning of a word often depends on its context.",
           "translation": "単語の意味はしばしば文脈に依存する。",
-          "root": "con- + texere = weave together",
-          "tags": ["reading", "language"],
-          "difficulty": "B1",
-          "frequency": "high"
+          "root": "con- + texere = weave together"
         }
       ]
     },
@@ -144,10 +114,7 @@
           "pos": "noun",
           "example": "The concept of freedom has changed across history.",
           "translation": "自由という概念は歴史を通じて変化してきた。",
-          "root": "con- + capere = take together",
-          "tags": ["philosophy", "abstract"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "con- + capere = take together"
         },
         {
           "word": "category",
@@ -155,10 +122,7 @@
           "pos": "noun",
           "example": "The boundary between the two categories is not always clear.",
           "translation": "その二つのカテゴリーの境界は常に明確とは限らない。",
-          "root": "Greek kategoria = statement, class",
-          "tags": ["classification"],
-          "difficulty": "B2",
-          "frequency": "medium"
+          "root": "Greek kategoria = statement, class"
         },
         {
           "word": "structure",
@@ -166,10 +130,7 @@
           "pos": "noun",
           "example": "The structure of the essay makes the argument easy to follow.",
           "translation": "そのエッセイの構造により、議論を追いやすくなっている。",
-          "root": "struere = build",
-          "tags": ["writing", "logic"],
-          "difficulty": "B1",
-          "frequency": "high"
+          "root": "struere = build"
         },
         {
           "word": "model",
@@ -177,10 +138,7 @@
           "pos": "noun/verb",
           "example": "Scientists use models to explain complex systems.",
           "translation": "科学者は複雑なシステムを説明するためにモデルを用いる。",
-          "root": "modulus = measure",
-          "tags": ["science", "system"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "modulus = measure"
         },
         {
           "word": "abstract",
@@ -188,10 +146,7 @@
           "pos": "adjective/verb",
           "example": "Abstract ideas become clearer when we connect them to examples.",
           "translation": "抽象的な考えは、具体例と結びつけるとより明確になる。",
-          "root": "ab- + trahere = draw away",
-          "tags": ["academic", "thinking"],
-          "difficulty": "B2",
-          "frequency": "high"
+          "root": "ab- + trahere = draw away"
         }
       ]
     }
