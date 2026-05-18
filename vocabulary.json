@@ -149,6 +149,270 @@
           "root": "ab- + trahere = draw away"
         }
       ]
+    },
+    {
+      "id": "unit1-day4",
+      "day": 4,
+      "title": "Day 4: Bias and Assumptions",
+      "theme": "How hidden expectations shape what we see",
+      "words": [
+        {
+          "word": "bias",
+          "meaning": "偏り／先入観",
+          "pos": "noun",
+          "example": "A writer's bias can influence the way evidence is selected.",
+          "translation": "筆者の偏りは、証拠の選び方に影響を与えることがある。",
+          "root": "Old French biais = slant, oblique angle"
+        },
+        {
+          "word": "assumption",
+          "meaning": "前提／思い込み",
+          "pos": "noun",
+          "example": "We should examine the assumption behind the argument before accepting it.",
+          "translation": "その議論を受け入れる前に、その背後にある前提を検討すべきである。",
+          "root": "as- + sumere = take up; something taken as true"
+        },
+        {
+          "word": "stereotype",
+          "meaning": "固定観念／ステレオタイプ",
+          "pos": "noun",
+          "example": "A stereotype reduces a complex person to a simple image.",
+          "translation": "固定観念は、複雑な人間を単純なイメージに還元してしまう。",
+          "root": "stereo- = solid + type = model, impression"
+        },
+        {
+          "word": "prejudice",
+          "meaning": "偏見／先入観",
+          "pos": "noun",
+          "example": "Prejudice often appears before careful observation begins.",
+          "translation": "偏見は、注意深い観察が始まる前に現れることが多い。",
+          "root": "pre- + judge = judge before"
+        },
+        {
+          "word": "perspective",
+          "meaning": "視点／観点",
+          "pos": "noun",
+          "example": "Changing our perspective can change the meaning of the same event.",
+          "translation": "視点を変えると、同じ出来事の意味が変わることがある。",
+          "root": "per- + specere = look through"
+        },
+        {
+          "word": "expectation",
+          "meaning": "期待／予想",
+          "pos": "noun",
+          "example": "Our expectations can make some details more noticeable than others.",
+          "translation": "私たちの期待は、ある細部を他の細部より目立たせることがある。",
+          "root": "ex- + spectare = look out for"
+        },
+        {
+          "word": "tendency",
+          "meaning": "傾向",
+          "pos": "noun",
+          "example": "Humans have a tendency to find patterns even in random events.",
+          "translation": "人間には、偶然の出来事の中にもパターンを見出す傾向がある。",
+          "root": "tendere = stretch, move toward"
+        }
+      ]
+    },
+    {
+      "id": "unit1-day5",
+      "day": 5,
+      "title": "Day 5: Abstraction and Classification",
+      "theme": "How the mind groups experience into ideas",
+      "words": [
+        {
+          "word": "abstraction",
+          "meaning": "抽象化／抽象概念",
+          "pos": "noun",
+          "example": "Abstraction allows us to think beyond particular examples.",
+          "translation": "抽象化によって、個別の例を超えて考えることができる。",
+          "root": "ab- + trahere = draw away"
+        },
+        {
+          "word": "category",
+          "meaning": "分類／カテゴリー",
+          "pos": "noun",
+          "example": "A category helps us organize many different objects under one idea.",
+          "translation": "カテゴリーは、多くの異なる物を一つの考えの下に整理するのに役立つ。",
+          "root": "Greek kategoria = class, statement"
+        },
+        {
+          "word": "classification",
+          "meaning": "分類／分類体系",
+          "pos": "noun",
+          "example": "Classification is not neutral; it reflects what a society considers important.",
+          "translation": "分類は中立ではなく、社会が何を重要と考えるかを反映する。",
+          "root": "classis = group + facere = make"
+        },
+        {
+          "word": "classify",
+          "meaning": "分類する",
+          "pos": "verb",
+          "example": "Scientists classify living things according to shared features.",
+          "translation": "科学者は共通する特徴に基づいて生物を分類する。",
+          "root": "classis = group + facere = make"
+        },
+        {
+          "word": "generalize",
+          "meaning": "一般化する",
+          "pos": "verb",
+          "example": "We must be careful not to generalize from too few examples.",
+          "translation": "少なすぎる例から一般化しないよう注意しなければならない。",
+          "root": "genus = kind, class"
+        },
+        {
+          "word": "distinction",
+          "meaning": "区別／相違",
+          "pos": "noun",
+          "example": "The distinction between fact and interpretation is central to critical reading.",
+          "translation": "事実と解釈の区別は、批判的読解の中心である。",
+          "root": "dis- + stinguere = mark apart"
+        },
+        {
+          "word": "feature",
+          "meaning": "特徴／特性",
+          "pos": "noun",
+          "example": "The most important feature of the model is its simplicity.",
+          "translation": "そのモデルの最も重要な特徴は単純さである。",
+          "root": "Old French faiture = form, make"
+        }
+      ]
+    },
+    {
+      "id": "unit1-day6",
+      "day": 6,
+      "title": "Day 6: Models and Frameworks",
+      "theme": "Tools for seeing hidden structure",
+      "words": [
+        {
+          "word": "model",
+          "meaning": "モデル／模型",
+          "pos": "noun",
+          "example": "A model simplifies reality so that we can understand its structure.",
+          "translation": "モデルは現実を単純化し、その構造を理解できるようにする。",
+          "root": "modulus = small measure"
+        },
+        {
+          "word": "framework",
+          "meaning": "枠組み",
+          "pos": "noun",
+          "example": "A useful framework shows how different ideas are connected.",
+          "translation": "有用な枠組みは、異なる考えがどのように結びついているかを示す。",
+          "root": "frame + work = supporting structure"
+        },
+        {
+          "word": "structure",
+          "meaning": "構造",
+          "pos": "noun",
+          "example": "The structure of a system may be invisible at first glance.",
+          "translation": "システムの構造は、一見しただけでは見えないことがある。",
+          "root": "struere = build, arrange"
+        },
+        {
+          "word": "system",
+          "meaning": "体系／制度／システム",
+          "pos": "noun",
+          "example": "A change in one part of the system can affect the whole.",
+          "translation": "システムの一部の変化が全体に影響を与えることがある。",
+          "root": "Greek systema = things placed together"
+        },
+        {
+          "word": "mechanism",
+          "meaning": "仕組み／メカニズム",
+          "pos": "noun",
+          "example": "The mechanism behind the effect is still not fully understood.",
+          "translation": "その効果の背後にある仕組みは、まだ完全には理解されていない。",
+          "root": "Greek mechane = machine, device"
+        },
+        {
+          "word": "component",
+          "meaning": "構成要素",
+          "pos": "noun",
+          "example": "Each component plays a different role in the larger structure.",
+          "translation": "それぞれの構成要素は、より大きな構造の中で異なる役割を果たす。",
+          "root": "com- + ponere = put together"
+        },
+        {
+          "word": "relation",
+          "meaning": "関係／関連",
+          "pos": "noun",
+          "example": "Meaning often emerges from the relation between words, not from one word alone.",
+          "translation": "意味は一語だけからではなく、語と語の関係から生まれることが多い。",
+          "root": "re- + ferre/latum = carry back, connect"
+        }
+      ]
+    },
+    {
+      "id": "unit1-day7",
+      "day": 7,
+      "title": "Day 7: Meta-cognition and Reflection",
+      "theme": "Thinking about how we think and interpret",
+      "words": [
+        {
+          "word": "metacognition",
+          "meaning": "メタ認知／自分の思考を考えること",
+          "pos": "noun",
+          "example": "Metacognition helps learners notice how they understand a difficult text.",
+          "translation": "メタ認知は、学習者が難しい文章をどのように理解しているかに気づく助けとなる。",
+          "root": "meta- = beyond, about + cognition = knowing"
+        },
+        {
+          "word": "interpretation",
+          "meaning": "解釈",
+          "pos": "noun",
+          "example": "Every interpretation should be tested against the evidence in the text.",
+          "translation": "すべての解釈は、本文中の根拠と照らし合わせて検証されるべきである。",
+          "root": "inter- + pretari = explain between"
+        },
+        {
+          "word": "reflection",
+          "meaning": "振り返り／反省／反映",
+          "pos": "noun",
+          "example": "Reflection turns experience into learning.",
+          "translation": "振り返りは、経験を学びへと変える。",
+          "root": "re- + flectere = bend back"
+        },
+        {
+          "word": "awareness",
+          "meaning": "気づき／認識",
+          "pos": "noun",
+          "example": "Awareness of one's own bias is the first step toward better judgment.",
+          "translation": "自分自身の偏りへの気づきは、よりよい判断への第一歩である。",
+          "root": "aware = watchful, informed"
+        },
+        {
+          "word": "monitor",
+          "meaning": "観察する／監視する",
+          "pos": "verb",
+          "example": "Good readers monitor their understanding while they read.",
+          "translation": "優れた読み手は、読んでいる間に自分の理解を確認する。",
+          "root": "monere = warn, remind"
+        },
+        {
+          "word": "evaluate",
+          "meaning": "評価する／見極める",
+          "pos": "verb",
+          "example": "We need to evaluate whether the conclusion follows from the evidence.",
+          "translation": "結論が証拠から導かれるかどうかを評価する必要がある。",
+          "root": "e- + value = determine worth"
+        },
+        {
+          "word": "insight",
+          "meaning": "洞察／見抜く力",
+          "pos": "noun",
+          "example": "Insight often comes when we question our first interpretation.",
+          "translation": "洞察は、最初の解釈を疑うときに生まれることが多い。",
+          "root": "in- + sight = seeing inward"
+        },
+        {
+          "word": "revision",
+          "meaning": "修正／見直し",
+          "pos": "noun",
+          "example": "Revision is not failure; it is evidence that thinking has improved.",
+          "translation": "修正は失敗ではなく、思考が改善した証拠である。",
+          "root": "re- + videre = see again"
+        }
+      ]
     }
   ]
 }

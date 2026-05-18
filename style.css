@@ -229,9 +229,20 @@ button:disabled {
 .mode-card strong { font-size: 17px; }
 .mode-card small { color: var(--muted); line-height: 1.5; }
 
+.route-note {
+  margin-top: -2px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.day-list-card {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(232,250,255,.94));
+}
+
 .day-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 10px;
 }
 
@@ -449,7 +460,7 @@ button:disabled {
 
 @media (max-width: 420px) {
   .clear-grid { grid-template-columns: 1fr; }
-  .day-list { grid-template-columns: 1fr; }
+  .day-list { grid-template-columns: repeat(2, 1fr); }
   .flash-controls { grid-template-columns: 1fr; }
   .hero { padding-left: 12px; padding-right: 12px; }
 }
