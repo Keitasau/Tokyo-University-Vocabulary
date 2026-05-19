@@ -10,6 +10,8 @@
   var currentDayIndex = 0;
   var currentMode = 'home';
   var quiz = null;
+  var quizTimer = null;
+  var quizAutoNext = null;
   var lastClearEvent = null;
 
   var fallbackData = {
@@ -730,8 +732,8 @@
   function handleAction(event) {
     var target = event.currentTarget;
     var action = target.getAttribute('data-action');
-    if (action === 'home') { currentMode = 'home'; render(); }
-    if (action === 'mode') { currentMode = target.getAttribute('data-mode') || 'home'; quiz = null; render(); }
+    if (action === 'home') { stopQuizTimer(); currentMode = 'home'; render(); }
+    if (action === 'mode') { stopQuizTimer(); currentMode = target.getAttribute('data-mode') || 'home'; quiz = null; render(); }
     if (action === 'selectDay') selectDay(Number(target.getAttribute('data-index')));
     if (action === 'startQuiz') startQuiz(target.getAttribute('data-mode'));
     if (action === 'answer') answerQuiz(Number(target.getAttribute('data-choice')));
@@ -750,6 +752,7 @@
     if (!day || !state.unlocked[day.id]) return;
     currentDayIndex = index;
     currentMode = 'home';
+    stopQuizTimer();
     quiz = null;
     if (!lastClearEvent || lastClearEvent.dayId !== day.id) lastClearEvent = null;
     render();
@@ -762,7 +765,8 @@
       render();
       return;
     }
-    quiz = { mode: mode, order: shuffle(day.words.map(function (_, i) { return i; })), pos: 0, score: 0, locked: false, selected: -1 };
+    stopQuizTimer();
+    quiz = { mode: mode, order: shuffle(day.words.map(function (_, i) { return i; })), pos: 0, score: 0, locked: false, selected: -1, timeLeft: 10 };
     renderQuizQuestion();
   }
 
@@ -770,33 +774,114 @@
     var day = currentDay();
     var main = app.querySelector('.main');
     if (!main || !quiz) return;
+    stopQuizTimer();
     var word = day.words[quiz.order[quiz.pos]];
     if (!word) { finishQuiz(); return; }
     var choices = makeChoices(word, day.words);
     quiz.correctChoice = choices.indexOf(word.meaning);
+    quiz.timeLeft = 10;
     main.innerHTML = '' +
       '<section class="card quiz-card">' +
-        '<div class="flash-counter">' + (quiz.pos + 1) + ' / ' + quiz.order.length + '</div>' +
+        '<div class="quiz-topline">' +
+          '<div class="flash-counter quiz-counter">' + (quiz.pos + 1) + ' / ' + quiz.order.length + '</div>' +
+          '<div class="timer-chip" aria-live="polite"><span>⏱</span><strong id="quizTimerText">10</strong><small>sec</small></div>' +
+        '</div>' +
+        '<div class="timer-bar"><div id="quizTimerBar" style="width:100%"></div></div>' +
         (quiz.mode === 'listening' ? '<button class="sound-button" data-action="speak" data-word="' + h(word.word) + '">🔊 音声を再生</button><p class="hint">聞こえた英単語の意味を選んでください。</p>' : '<h2 class="quiz-word">' + h(word.word) + '</h2><p class="hint">この英単語の意味を選んでください。</p>') +
         '<div class="choices">' + choices.map(function (choice, i) { return '<button class="choice" data-action="answer" data-choice="' + i + '">' + h(choice) + '</button>'; }).join('') + '</div>' +
       '</section>';
     bindEvents();
-    if (quiz.mode === 'listening') setTimeout(function () { speak(word.word); }, 250);
+    startQuizTimer();
+    if (quiz.mode === 'listening') setTimeout(function () { if (quiz && !quiz.locked) speak(word.word); }, 250);
   }
 
   function makeChoices(correctWord, words) {
-    var meanings = words.map(function (w) { return w.meaning; }).filter(function (m) { return m && m !== correctWord.meaning; });
-    var extras = ['構造', '分類', '証拠／根拠', '抽象的な／抽出する', '変化', '比較する'].filter(function (m) { return m !== correctWord.meaning; });
-    var pool = shuffle(meanings.concat(extras));
+    var baseMeanings = words.map(function (w) { return w.meaning; }).filter(function (m) {
+      return isGoodDistractor(m, correctWord.meaning);
+    });
+    var extras = [
+      '構造', '分類', '証拠／根拠', '抽象的な考え', '変化', '比較', '関係', '文脈／状況',
+      '仕組み／メカニズム', '構成要素', '気づき／認識', '修正／見直し', '洞察', '一般化'
+    ].filter(function (m) { return isGoodDistractor(m, correctWord.meaning); });
+    var pool = shuffle(baseMeanings.concat(extras));
     var choices = [correctWord.meaning];
     pool.forEach(function (m) {
-      if (choices.length < 4 && choices.indexOf(m) === -1) choices.push(m);
+      if (choices.length < 4 && choices.every(function (existing) { return isGoodDistractor(m, existing); })) choices.push(m);
     });
     return shuffle(choices);
   }
 
-  function answerQuiz(choiceIndex) {
+  function isGoodDistractor(candidate, anchor) {
+    if (!candidate || !anchor || candidate === anchor) return false;
+    var c = normalizeMeaning(candidate);
+    var a = normalizeMeaning(anchor);
+    if (!c || !a || c === a) return false;
+    if (c.indexOf(a) !== -1 || a.indexOf(c) !== -1) return false;
+    var cParts = meaningParts(candidate);
+    var aParts = meaningParts(anchor);
+    for (var i = 0; i < cParts.length; i++) {
+      for (var j = 0; j < aParts.length; j++) {
+        if (cParts[i] === aParts[j]) return false;
+        if (cParts[i].length >= 2 && aParts[j].length >= 2 && (cParts[i].indexOf(aParts[j]) !== -1 || aParts[j].indexOf(cParts[i]) !== -1)) return false;
+      }
+    }
+    return true;
+  }
+
+  function normalizeMeaning(text) {
+    return String(text || '')
+      .replace(/[\s　]/g, '')
+      .replace(/[／\/・,，、()（）]/g, '')
+      .replace(/する$/g, '')
+      .replace(/的な/g, '')
+      .replace(/こと/g, '');
+  }
+
+  function meaningParts(text) {
+    var raw = String(text || '').split(/[／\/・,，、()（）\s　]+/);
+    var parts = [];
+    raw.forEach(function (part) {
+      var clean = normalizeMeaning(part);
+      if (clean && clean.length >= 2 && parts.indexOf(clean) === -1) parts.push(clean);
+    });
+    return parts;
+  }
+
+  function startQuizTimer() {
+    if (!quiz) return;
+    stopQuizTimer();
+    updateQuizTimerView();
+    quizTimer = setInterval(function () {
+      if (!quiz || quiz.locked) { stopQuizTimer(); return; }
+      quiz.timeLeft -= 1;
+      updateQuizTimerView();
+      if (quiz.timeLeft <= 0) answerQuiz(-1, true);
+    }, 1000);
+  }
+
+  function stopQuizTimer() {
+    if (quizTimer) {
+      clearInterval(quizTimer);
+      quizTimer = null;
+    }
+    if (quizAutoNext) {
+      clearTimeout(quizAutoNext);
+      quizAutoNext = null;
+    }
+  }
+
+  function updateQuizTimerView() {
+    if (!quiz) return;
+    var left = Math.max(0, quiz.timeLeft || 0);
+    var text = document.getElementById('quizTimerText');
+    var bar = document.getElementById('quizTimerBar');
+    if (text) text.textContent = String(left);
+    if (bar) bar.style.width = Math.max(0, Math.min(100, left * 10)) + '%';
+  }
+
+  function answerQuiz(choiceIndex, timedOut) {
     if (!quiz || quiz.locked) return;
+    stopQuizTimer();
     quiz.locked = true;
     quiz.selected = choiceIndex;
     if (choiceIndex === quiz.correctChoice) quiz.score += 1;
@@ -812,14 +897,19 @@
       return;
     }
     var result = document.createElement('div');
-    result.className = 'result-box';
-    result.innerHTML = (choiceIndex === quiz.correctChoice ? '<strong>Correct!</strong>' : '<strong>Review!</strong>') +
+    result.className = 'result-box ' + (timedOut ? 'time-up-box' : '');
+    result.innerHTML = (choiceIndex === quiz.correctChoice ? '<strong>Correct!</strong>' : (timedOut ? '<strong>Time up!</strong>' : '<strong>Review!</strong>')) +
+      '<p>' + (timedOut ? '10秒経過しました。次の問題へ進みます。' : (choiceIndex === quiz.correctChoice ? '瞬時に意味へアクセスできました。' : '正解を確認して次へ進みましょう。')) + '</p>' +
       '<button class="primary wide" data-action="nextQuestion">' + (quiz.pos < quiz.order.length - 1 ? '次の問題へ' : '結果を見る') + '</button>';
     card.appendChild(result);
     bindEvents();
+    if (timedOut) {
+      quizAutoNext = setTimeout(function () { nextQuestion(); }, 900);
+    }
   }
 
   function nextQuestion() {
+    stopQuizTimer();
     if (!quiz) return;
     if (quiz.pos < quiz.order.length - 1) {
       quiz.pos += 1;
@@ -831,6 +921,7 @@
   }
 
   function finishQuiz() {
+    stopQuizTimer();
     if (!quiz) return;
     var mode = quiz.mode;
     var score = quiz.score;
@@ -893,6 +984,7 @@
     state = defaultState(data);
     currentDayIndex = 0;
     currentMode = 'home';
+    stopQuizTimer();
     quiz = null;
     lastClearEvent = null;
     saveState();

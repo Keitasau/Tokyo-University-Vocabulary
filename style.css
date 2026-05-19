@@ -604,3 +604,79 @@ button:disabled {
   .level-up { width: 100%; justify-content: center; }
   .sparkles { font-size: 20px; right: 12px; }
 }
+
+/* Quiz UX: 10-second countdown + clean mobile layout */
+.quiz-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.quiz-counter {
+  margin: 0;
+  color: var(--muted);
+}
+
+.timer-chip {
+  min-width: 92px;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(15,143,179,.1);
+  color: #087b98;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(15,143,179,.12);
+}
+
+.timer-chip strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.timer-chip small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.timer-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(16,48,71,.09);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.timer-bar div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #59e3f2, #0f8fb3);
+  transition: width .22s linear;
+}
+
+.result-box p {
+  margin: 6px 0 2px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.time-up-box {
+  background: rgba(217,79,92,.08);
+}
+
+@media (max-width: 420px) {
+  .quiz-topline {
+    align-items: stretch;
+  }
+
+  .timer-chip {
+    min-width: 82px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
