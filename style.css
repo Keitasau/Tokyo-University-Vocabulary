@@ -464,3 +464,143 @@ button:disabled {
   .flash-controls { grid-template-columns: 1fr; }
   .hero { padding-left: 12px; padding-right: 12px; }
 }
+
+/* Day CLEAR / exploration UX additions */
+.sea-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 14px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  color: rgba(255,255,255,.94);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.sea-progress-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.sea-progress-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 82% 20%, rgba(255,255,255,.22), transparent 8rem);
+  pointer-events: none;
+}
+
+.sea-ascii {
+  margin: 4px 0 8px;
+  color: rgba(255,255,255,.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(18px, 5vw, 28px);
+  letter-spacing: .04em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+
+.mini-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 2px;
+}
+
+.mini-stats span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(15,143,179,.10);
+  color: #087b98;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.day-clear-card {
+  position: relative;
+  overflow: hidden;
+  color: white;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255,255,255,.32), transparent 8rem),
+    linear-gradient(135deg, rgba(9,116,151,.98), rgba(11,42,84,.98));
+  border-color: rgba(255,255,255,.42);
+  animation: clearRise .42s ease both;
+}
+
+.day-clear-card h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(27px, 8vw, 44px);
+  line-height: 1.08;
+}
+
+.day-clear-card p {
+  color: rgba(255,255,255,.88);
+}
+
+.clear-kicker {
+  margin: 0;
+  color: #dffbff !important;
+  font-weight: 950;
+  letter-spacing: .18em;
+  font-size: 12px;
+}
+
+.unlock-line {
+  margin: 0 0 12px;
+  font-weight: 800;
+}
+
+.level-up {
+  display: inline-flex;
+  margin: 2px 0 12px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.17);
+  color: white;
+  font-weight: 950;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+}
+
+.explore-meter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 8px;
+  font-weight: 900;
+}
+
+.sparkles {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  display: flex;
+  gap: 10px;
+  color: rgba(255,255,255,.82);
+  font-size: 24px;
+}
+
+.sparkles span {
+  animation: sparkleFloat 1.8s ease-in-out infinite;
+}
+
+.sparkles span:nth-child(2) { animation-delay: .25s; }
+.sparkles span:nth-child(3) { animation-delay: .5s; }
+
+@keyframes clearRise {
+  from { opacity: 0; transform: translateY(14px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes sparkleFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: .65; }
+  50% { transform: translateY(-7px) rotate(12deg); opacity: 1; }
+}
+
+@media (max-width: 420px) {
+  .explore-meter { flex-direction: column; gap: 2px; }
+  .level-up { width: 100%; justify-content: center; }
+  .sparkles { font-size: 20px; right: 12px; }
+}

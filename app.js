@@ -10,6 +10,7 @@
   var currentDayIndex = 0;
   var currentMode = 'home';
   var quiz = null;
+  var lastClearEvent = null;
 
   var fallbackData = {
     "appTitle": "Academic Vocabulary Network Adventure",
@@ -566,6 +567,7 @@
     header.className = 'hero';
     var unitTitle = data.unit && data.unit.title ? data.unit.title : 'Academic Vocabulary Network';
     var progress = progressPercent();
+    var area = seaAreaName(day);
     header.innerHTML =
       '<div class="hero-top">' +
         '<div class="brand"><span class="brand-icon">🦈</span><span>' + h(data.appTitle || 'Vocabulary Adventure') + '</span></div>' +
@@ -574,7 +576,8 @@
       '<p class="unit-title">' + h(unitTitle) + '</p>' +
       '<h1>' + h(day.title) + '</h1>' +
       '<p class="theme">' + h(day.theme || '') + '</p>' +
-      '<div class="oxygen-wrap"><div class="oxygen-label"><span>Progress</span><span>' + progress + '%</span></div><div class="oxygen"><div style="width:' + progress + '%"></div></div></div>';
+      '<div class="sea-chip">🧭 Current Area: ' + h(area) + '</div>' +
+      seaProgressHtml(progress);
     return header;
   }
 
@@ -584,16 +587,70 @@
     return Math.round((done / total) * 100);
   }
 
+
+  function completedDayCount() {
+    if (!data || !Array.isArray(data.days)) return 0;
+    return data.days.filter(function (d) { return state.completed[d.id]; }).length;
+  }
+
+  function sharkLevel() {
+    return completedDayCount() + 1;
+  }
+
+  function seaAreaName(day) {
+    var names = [
+      'Meaning Lagoon',
+      'Evidence Current',
+      'Concept Atoll',
+      'Bias Trench',
+      'Abstraction Shelf',
+      'Framework Reef',
+      'Reflection Abyss'
+    ];
+    var n = day && day.day ? Number(day.day) : 1;
+    return names[n - 1] || ('Perception Area ' + n);
+  }
+
+  function seaProgressHtml(progress) {
+    var filled = Math.max(0, Math.min(10, Math.round(progress / 10)));
+    var bar = '';
+    for (var i = 0; i < 10; i++) bar += i < filled ? '█' : '░';
+    return '<div class="oxygen-wrap sea-progress-card">' +
+      '<div class="oxygen-label"><span>Perception Sea</span><span>' + progress + '% explored</span></div>' +
+      '<div class="sea-ascii" aria-label="Perception Sea ' + progress + '% explored">' + bar + '</div>' +
+      '<div class="oxygen"><div style="width:' + progress + '%"></div></div>' +
+    '</div>';
+  }
+
+  function dayClearEventHtml(event) {
+    if (!event) return '';
+    var nextLine = event.nextDay ? 'New Sea Unlocked: Day ' + event.nextDay.day : 'Perception Sea fully explored';
+    return '' +
+      '<section class="card day-clear-card">' +
+        '<div class="sparkles" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span></div>' +
+        '<p class="clear-kicker">DAY CLEAR</p>' +
+        '<h2>' + h(event.area) + ' discovered</h2>' +
+        '<p class="unlock-line">' + h(nextLine) + '</p>' +
+        '<div class="level-up">🦈 Shark Sensei Lv.' + h(event.oldLevel) + ' → Lv.' + h(event.newLevel) + '</div>' +
+        '<div class="explore-meter"><span>Perception Sea</span><strong>' + h(event.progress) + '% explored</strong></div>' +
+        '<div class="oxygen"><div style="width:' + h(event.progress) + '%"></div></div>' +
+      '</section>';
+  }
+
   function homeHtml(day) {
     var clears = state.clears[day.id];
     var completed = state.completed[day.id];
     var next = data.days[currentDayIndex + 1];
-    var status = completed ? 'CLEAR：次のDayが解放されています。' : 'Listening / Quiz / Flashcard をすべてCLEARすると次のDayが解放されます。';
+    var status = completed ? 'CLEAR：この海域の探索は完了しました。次の海へ進めます。' : 'Flashcard / Quiz / Listening をすべてCLEARすると次の海域が解放されます。';
+    var area = seaAreaName(day);
+    var celebration = lastClearEvent && lastClearEvent.dayId === day.id ? dayClearEventHtml(lastClearEvent) : '';
     return '' +
+      celebration +
       '<section class="card current-card">' +
         '<div class="badge">Day ' + h(day.day) + ' / ' + h(data.days.length) + ' ・ ' + h(day.words.length) + ' words</div>' +
-        '<h2>今日の海域</h2>' +
+        '<h2>今日の海域：' + h(area) + '</h2>' +
         '<p>' + h(status) + '</p>' +
+        '<div class="mini-stats"><span>🦈 Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(progressPercent()) + '% explored</span></div>' +
         '<div class="clear-grid">' +
           clearPill('Flashcard', clears.flashcard) +
           clearPill('Quiz', clears.quiz) +
@@ -694,6 +751,7 @@
     currentDayIndex = index;
     currentMode = 'home';
     quiz = null;
+    if (!lastClearEvent || lastClearEvent.dayId !== day.id) lastClearEvent = null;
     render();
   }
 
@@ -779,28 +837,44 @@
     var total = quiz.order.length;
     var passed = score === total;
     var main = app ? app.querySelector('.main') : null;
-    if (passed) clearMode(mode, true);
+    var celebration = passed ? clearMode(mode, true) : null;
     if (!main) {
       currentMode = 'home';
       quiz = null;
       render();
       return;
     }
-    main.innerHTML = '<section class="card result-card"><h2>' + (passed ? 'CLEAR!' : 'もう一度挑戦') + '</h2><p>Score: ' + score + ' / ' + total + '</p><p>' + (passed ? 'このモードはCLEARです。' : '全問正解でCLEARになります。') + '</p><button class="primary wide" data-action="' + (passed ? 'home' : 'startQuiz') + '" data-mode="' + h(mode) + '">' + (passed ? 'Homeへ戻る' : '再挑戦') + '</button></section>';
+    main.innerHTML = (celebration ? dayClearEventHtml(celebration) : '') + '<section class="card result-card"><h2>' + (passed ? 'CLEAR!' : 'もう一度挑戦') + '</h2><p>Score: ' + score + ' / ' + total + '</p><p>' + (passed ? (celebration ? 'Day CLEAR! 新しい海域が見えてきました。' : 'このモードはCLEARです。') : '全問正解でCLEARになります。') + '</p><button class="primary wide" data-action="' + (passed ? 'home' : 'startQuiz') + '" data-mode="' + h(mode) + '">' + (passed ? 'Homeへ戻る' : '再挑戦') + '</button></section>';
     quiz = null;
     bindEvents();
   }
 
   function clearMode(mode, silent) {
     var day = currentDay();
+    var wasCompleted = !!state.completed[day.id];
+    var oldLevel = sharkLevel();
     if (!state.clears[day.id]) state.clears[day.id] = { listening: false, quiz: false, flashcard: false };
     state.clears[day.id][mode] = true;
     applyUnlockRules(state, data);
+    var becameCompleted = !wasCompleted && !!state.completed[day.id];
+    var event = null;
+    if (becameCompleted) {
+      event = {
+        dayId: day.id,
+        area: seaAreaName(day),
+        oldLevel: oldLevel,
+        newLevel: sharkLevel(),
+        progress: progressPercent(),
+        nextDay: data.days[currentDayIndex + 1] || null
+      };
+      lastClearEvent = event;
+    }
     saveState();
     if (!silent) {
       currentMode = 'home';
       render();
     }
+    return event;
   }
 
   function nextDay() {
@@ -808,6 +882,7 @@
     if (!next || !state.unlocked[next.id]) return;
     currentDayIndex += 1;
     currentMode = 'home';
+    lastClearEvent = null;
     render();
   }
 
@@ -819,6 +894,7 @@
     currentDayIndex = 0;
     currentMode = 'home';
     quiz = null;
+    lastClearEvent = null;
     saveState();
     render();
   }
