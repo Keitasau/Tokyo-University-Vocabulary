@@ -23,6 +23,10 @@
   var fallbackData = {
     appTitle: 'Academic Vocabulary Network Adventure',
     unit: { id: 'unit1', title: 'Unit 1: Perception Sea', coreQuestion: 'Do we see reality itself?' },
+    units: [
+      { id: 'unit1', title: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', coreQuestion: 'Do we see reality itself?' },
+      { id: 'unit2', title: 'Unit 2: Language Sea', seaTitle: 'Language Sea', coreQuestion: 'How does language create meaning?' }
+    ],
     days: []
   };
 
@@ -68,6 +72,11 @@
     clean.days.forEach(function (day, index) {
       if (!day.id) day.id = 'unit1-day' + (index + 1);
       if (!day.day) day.day = index + 1;
+      if (!day.unitId) day.unitId = day.id.indexOf('unit2-') === 0 ? 'unit2' : 'unit1';
+      if (!day.unitNumber) day.unitNumber = day.unitId === 'unit2' ? 2 : 1;
+      if (!day.unitDay) day.unitDay = day.unitId === 'unit2' ? Math.max(1, (Number(day.day) || index + 1) - 7) : (Number(day.day) || index + 1);
+      if (!day.seaTitle) day.seaTitle = day.unitId === 'unit2' ? 'Language Sea' : 'Perception Sea';
+      if (!day.unitTitle) day.unitTitle = 'Unit ' + day.unitNumber + ': ' + day.seaTitle;
       if (!Array.isArray(day.words)) day.words = [];
       day.words.forEach(function (word) {
         word.word = String(word.word || '').trim();
@@ -197,7 +206,7 @@
 
   function currentDay() {
     if (!data || !Array.isArray(data.days) || data.days.length === 0) {
-      return { id: 'unit1-day1', day: 1, title: 'Day 1', theme: '', words: [] };
+      return { id: 'unit1-day1', day: 1, unitId: 'unit1', unitNumber: 1, unitDay: 1, unitTitle: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', title: 'Day 1', theme: '', words: [] };
     }
     return data.days[currentDayIndex] || data.days[0];
   }
@@ -234,17 +243,17 @@
   function buildHeader(day) {
     var header = document.createElement('header');
     header.className = 'hero';
-    var unitTitle = data.unit && data.unit.title ? data.unit.title : 'Academic Vocabulary Network';
+    var unitTitle = day.unitTitle || (data.unit && data.unit.title ? data.unit.title : 'Academic Vocabulary Network');
     var progress = progressPercent();
     var area = seaAreaName(day);
     var weakCount = weakList().length;
     header.innerHTML = '' +
       '<div class="topline"><div><div class="app-title">' + h(data.appTitle || 'Vocabulary Adventure') + '</div><div class="unit-title">' + h(unitTitle) + '</div></div>' +
       '<button class="ghost-btn" data-action="reset">Reset</button></div>' +
-      '<div class="hero-main"><div><h1>' + h(day.title) + '</h1><p>' + h(day.theme || '') + '</p></div>' +
+      '<div class="hero-main"><div><h1>' + h(day.title) + '</h1><p>' + h(day.theme || '') + '</p><p class="core-question">' + h(day.coreQuestion || '') + '</p></div>' +
       '<div class="level-badge">Lv.' + h(sharkLevel()) + '</div></div>' +
       '<div class="current-area">Current Area: ' + h(area) + '</div>' +
-      seaProgressHtml(progress) +
+      seaProgressHtml(progress, day) +
       '<div class="weak-mini"><span>Weak Words</span><strong>' + h(weakCount) + '</strong><button data-action="mode" data-mode="weak">Review</button></div>';
     return header;
   }
@@ -264,21 +273,33 @@
   }
 
   function seaAreaName(day) {
-    var names = ['Meaning Lagoon', 'Evidence Current', 'Concept Atoll', 'Bias Trench', 'Abstraction Shelf', 'Framework Reef', 'Reflection Abyss'];
-    var n = day && day.day ? Number(day.day) : 1;
-    return names[n - 1] || ('Perception Area ' + n);
+    var perceptionNames = ['Meaning Lagoon', 'Evidence Current', 'Concept Atoll', 'Bias Trench', 'Abstraction Shelf', 'Framework Reef', 'Reflection Abyss'];
+    var languageNames = ['Symbol Lagoon', 'Expression Current', 'Narrative Reef', 'Rhetoric Trench', 'Translation Shelf', 'Metaphor Grotto', 'Media Abyss'];
+    var names = day && day.unitId === 'unit2' ? languageNames : perceptionNames;
+    var n = day && day.unitDay ? Number(day.unitDay) : (day && day.day ? Number(day.day) : 1);
+    return names[n - 1] || ((day && day.seaTitle ? day.seaTitle : 'Sea') + ' Area ' + n);
   }
 
-  function seaProgressHtml(progress) {
-    var filled = Math.max(0, Math.min(10, Math.round(progress / 10)));
+  function unitProgressPercent(day) {
+    var unitId = day && day.unitId ? day.unitId : 'unit1';
+    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
+    var total = unitDays.length || 1;
+    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
+    return Math.round((done / total) * 100);
+  }
+
+  function seaProgressHtml(progress, day) {
+    var unitProgress = unitProgressPercent(day);
+    var filled = Math.max(0, Math.min(10, Math.round(unitProgress / 10)));
     var bar = '';
     for (var i = 0; i < 10; i++) bar += i < filled ? '█' : '░';
-    return '<div class="sea-progress"><div class="progress-label"><span>Perception Sea</span><span>' + h(progress) + '% explored</span></div><div class="bar-shell"><div class="bar-fill" style="width:' + h(progress) + '%"></div></div><div class="pixel-bar">' + h(bar) + '</div></div>';
+    var sea = day && day.seaTitle ? day.seaTitle : 'Learning Sea';
+    return '<div class="sea-progress"><div class="progress-label"><span>' + h(sea) + '</span><span>' + h(unitProgress) + '% explored</span></div><div class="bar-shell"><div class="bar-fill" style="width:' + h(unitProgress) + '%"></div></div><div class="pixel-bar">' + h(bar) + '</div><div class="overall-progress">Total Voyage: ' + h(progress) + '% explored</div></div>';
   }
 
   function dayClearEventHtml(event) {
     if (!event) return '';
-    var nextLine = event.nextDay ? 'New Sea Unlocked: Day ' + event.nextDay.day : 'Perception Sea fully explored';
+    var nextLine = event.nextDay ? 'New Sea Unlocked: Unit ' + (event.nextDay.unitNumber || 1) + ' Day ' + (event.nextDay.unitDay || event.nextDay.day) : (event.sea || 'This Sea') + ' fully explored';
     return '<section class="clear-event"><div class="sparkle">✦✧✦</div><div class="clear-label">DAY CLEAR</div><h2>' + h(event.area) + ' discovered</h2><p>' + h(nextLine) + '</p><p>Shark Sensei Lv.' + h(event.oldLevel) + ' → Lv.' + h(event.newLevel) + '</p><p>Perception Sea ' + h(event.progress) + '% explored</p></section>';
   }
 
@@ -295,9 +316,9 @@
     var area = seaAreaName(day);
     var celebration = lastClearEvent && lastClearEvent.dayId === day.id ? dayClearEventHtml(lastClearEvent) : '';
     return '' + celebration +
-      '<section class="card home-card"><div class="eyebrow">Day ' + h(day.day) + ' / ' + h(data.days.length) + ' ・ ' + h(day.words.length) + ' words</div>' +
+      '<section class="card home-card"><div class="eyebrow">Unit ' + h(day.unitNumber || 1) + ' Day ' + h(day.unitDay || day.day) + ' / 7 ・ Voyage Day ' + h(day.day) + ' ・ ' + h(day.words.length) + ' words</div>' +
       '<h2>今日の海域：' + h(area) + '</h2><p>' + h(status) + '</p>' +
-      '<div class="status-line"><span>Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(progressPercent()) + '% explored</span></div>' +
+      '<div class="status-line"><span>Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(day.seaTitle || 'Learning Sea') + ' ' + h(unitProgressPercent(day)) + '% explored</span></div>' +
       '<div class="clear-row">' + clearPill('Flashcard', clears.flashcard) + clearPill('Quiz', clears.quiz) + clearPill('Listening', clears.listening) + '</div>' +
       '<div class="mode-grid">' +
       modeCard('flashcard', '📘', 'Flashcard', '例文・語源・意味を確認します。') +
@@ -305,9 +326,9 @@
       modeCard('listening', '🎧', '音声 → 日本語4択', '英単語を聞いて意味を即時想起します。') +
       modeCard('weak', '↺', 'Weak Words', '間違えた単語だけ、あとで再挑戦します。') +
       '</div></section>' +
-      '<section class="card"><h2>Perception Sea Route</h2><p>Flashcard → Quiz → Listen の順で、Day7まで進みます。Weak Wordsは進行判定とは完全に分離されています。</p>' +
+      '<section class="card"><h2>Voyage Route</h2><p>Flashcard → Quiz → Listen の順で、Perception SeaからLanguage Seaへ進みます。Weak Wordsは進行判定とは完全に分離されています。</p>' +
       '<div class="day-row">' + dayButtonsHtml() + '</div>' +
-      (next && completed ? '<button class="primary wide" data-action="nextDay">Day ' + h(next.day) + 'へ進む</button>' : '') + '</section>';
+      (next && completed ? '<button class="primary wide" data-action="nextDay">Unit ' + h(next.unitNumber || 1) + ' Day ' + h(next.unitDay || next.day) + 'へ進む</button>' : '') + '</section>';
   }
 
   function clearPill(label, ok) {
@@ -323,7 +344,7 @@
       var unlocked = !!state.unlocked[day.id];
       var active = index === currentDayIndex;
       var done = !!state.completed[day.id];
-      return '<button class="day-btn ' + (active ? 'active ' : '') + (done ? 'done ' : '') + '" data-action="selectDay" data-index="' + index + '" ' + (unlocked ? '' : 'disabled') + '><span>Day ' + h(day.day) + '</span><small>' + (unlocked ? (done ? 'CLEAR' : 'OPEN') : 'LOCK') + '</small></button>';
+      return '<button class="day-btn ' + (active ? 'active ' : '') + (done ? 'done ' : '') + '" data-action="selectDay" data-index="' + index + '" ' + (unlocked ? '' : 'disabled') + '><span>U' + h(day.unitNumber || 1) + '-D' + h(day.unitDay || day.day) + '</span><small>' + (unlocked ? (done ? 'CLEAR' : 'OPEN') : 'LOCK') + '</small></button>';
     }).join('');
   }
 
@@ -584,6 +605,8 @@
         oldLevel: oldLevel,
         newLevel: sharkLevel(),
         progress: progressPercent(),
+        unitProgress: unitProgressPercent(day),
+        sea: day.seaTitle || 'Learning Sea',
         nextDay: data.days[currentDayIndex + 1] || null
       };
     }

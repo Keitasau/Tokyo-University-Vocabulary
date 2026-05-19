@@ -12,12 +12,53 @@
       "title": "Day 1: Seeing and Meaning",
       "theme": "Perception and interpretation",
       "words": [
-        {"word":"perception","meaning":"知覚／認識","pos":"noun","example":"Our perception of reality is shaped by language and memory.","translation":"私たちの現実認識は、言語や記憶によって形作られる。","root":"per- + ceive = completely take in"},
-        {"word":"represent","meaning":"表す／代表する","pos":"verb","example":"A graph can represent complex information in a simple form.","translation":"グラフは複雑な情報を単純な形で表すことができる。","root":"re- + present = present again"},
-        {"word":"interpret","meaning":"解釈する","pos":"verb","example":"Readers interpret the same text in different ways.","translation":"読者は同じ文章を異なる方法で解釈する。","root":"inter- + pret = explain between"},
-        {"word":"assumption","meaning":"前提／思い込み","pos":"noun","example":"The argument depends on a hidden assumption.","translation":"その議論は隠れた前提に依存している。","root":"as- + sumere = take up"},
-        {"word":"framework","meaning":"枠組み","pos":"noun","example":"This framework helps us compare different theories.","translation":"この枠組みは異なる理論を比較するのに役立つ。","root":"frame + work = supporting structure"}
-      ]
+        {
+          "word": "perception",
+          "meaning": "知覚／認識",
+          "pos": "noun",
+          "example": "Our perception of reality is shaped by language and memory.",
+          "translation": "私たちの現実認識は、言語や記憶によって形作られる。",
+          "root": "per- + ceive = completely take in"
+        },
+        {
+          "word": "represent",
+          "meaning": "表す／代表する",
+          "pos": "verb",
+          "example": "A graph can represent complex information in a simple form.",
+          "translation": "グラフは複雑な情報を単純な形で表すことができる。",
+          "root": "re- + present = present again"
+        },
+        {
+          "word": "interpret",
+          "meaning": "解釈する",
+          "pos": "verb",
+          "example": "Readers interpret the same text in different ways.",
+          "translation": "読者は同じ文章を異なる方法で解釈する。",
+          "root": "inter- + pret = explain between"
+        },
+        {
+          "word": "assumption",
+          "meaning": "前提／思い込み",
+          "pos": "noun",
+          "example": "The argument depends on a hidden assumption.",
+          "translation": "その議論は隠れた前提に依存している。",
+          "root": "as- + sumere = take up"
+        },
+        {
+          "word": "framework",
+          "meaning": "枠組み",
+          "pos": "noun",
+          "example": "This framework helps us compare different theories.",
+          "translation": "この枠組みは異なる理論を比較するのに役立つ。",
+          "root": "frame + work = supporting structure"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 1,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day2",
@@ -25,12 +66,53 @@
       "title": "Day 2: Evidence and Inference",
       "theme": "How we move from signs to conclusions",
       "words": [
-        {"word":"evidence","meaning":"証拠／根拠","pos":"noun","example":"The claim is weak because there is little evidence to support it.","translation":"その主張を支える証拠がほとんどないため、その主張は弱い。","root":"e- + videre = clearly seen"},
-        {"word":"infer","meaning":"推論する","pos":"verb","example":"We can infer the writer's position from the final paragraph.","translation":"最後の段落から筆者の立場を推論できる。","root":"in- + ferre = carry into"},
-        {"word":"indicate","meaning":"示す","pos":"verb","example":"The data indicate a change in public attitudes.","translation":"そのデータは世論の変化を示している。","root":"in- + dicare = point out"},
-        {"word":"distinguish","meaning":"区別する","pos":"verb","example":"It is important to distinguish fact from opinion.","translation":"事実と意見を区別することが重要である。","root":"dis- + stinguere = mark apart"},
-        {"word":"context","meaning":"文脈／状況","pos":"noun","example":"The meaning of a word often depends on its context.","translation":"単語の意味はしばしば文脈に依存する。","root":"con- + texere = weave together"}
-      ]
+        {
+          "word": "evidence",
+          "meaning": "証拠／根拠",
+          "pos": "noun",
+          "example": "The claim is weak because there is little evidence to support it.",
+          "translation": "その主張を支える証拠がほとんどないため、その主張は弱い。",
+          "root": "e- + videre = clearly seen"
+        },
+        {
+          "word": "infer",
+          "meaning": "推論する",
+          "pos": "verb",
+          "example": "We can infer the writer's position from the final paragraph.",
+          "translation": "最後の段落から筆者の立場を推論できる。",
+          "root": "in- + ferre = carry into"
+        },
+        {
+          "word": "indicate",
+          "meaning": "示す",
+          "pos": "verb",
+          "example": "The data indicate a change in public attitudes.",
+          "translation": "そのデータは世論の変化を示している。",
+          "root": "in- + dicare = point out"
+        },
+        {
+          "word": "distinguish",
+          "meaning": "区別する",
+          "pos": "verb",
+          "example": "It is important to distinguish fact from opinion.",
+          "translation": "事実と意見を区別することが重要である。",
+          "root": "dis- + stinguere = mark apart"
+        },
+        {
+          "word": "context",
+          "meaning": "文脈／状況",
+          "pos": "noun",
+          "example": "The meaning of a word often depends on its context.",
+          "translation": "単語の意味はしばしば文脈に依存する。",
+          "root": "con- + texere = weave together"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 2,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day3",
@@ -38,12 +120,53 @@
       "title": "Day 3: Concepts and Models",
       "theme": "Thinking through abstract tools",
       "words": [
-        {"word":"concept","meaning":"概念","pos":"noun","example":"The concept of freedom has changed across history.","translation":"自由という概念は歴史を通じて変化してきた。","root":"con- + capere = take together"},
-        {"word":"category","meaning":"分類／カテゴリー","pos":"noun","example":"The boundary between the two categories is not always clear.","translation":"その二つのカテゴリーの境界は常に明確とは限らない。","root":"Greek kategoria = statement, class"},
-        {"word":"structure","meaning":"構造","pos":"noun","example":"The structure of the essay makes the argument easy to follow.","translation":"そのエッセイの構造により、議論を追いやすくなっている。","root":"struere = build"},
-        {"word":"model","meaning":"模型／モデル化する","pos":"noun/verb","example":"Scientists use models to explain complex systems.","translation":"科学者は複雑なシステムを説明するためにモデルを用いる。","root":"modulus = measure"},
-        {"word":"abstract","meaning":"抽象的な／抽出する","pos":"adjective/verb","example":"Abstract ideas become clearer when we connect them to examples.","translation":"抽象的な考えは、具体例と結びつけるとより明確になる。","root":"ab- + trahere = draw away"}
-      ]
+        {
+          "word": "concept",
+          "meaning": "概念",
+          "pos": "noun",
+          "example": "The concept of freedom has changed across history.",
+          "translation": "自由という概念は歴史を通じて変化してきた。",
+          "root": "con- + capere = take together"
+        },
+        {
+          "word": "category",
+          "meaning": "分類／カテゴリー",
+          "pos": "noun",
+          "example": "The boundary between the two categories is not always clear.",
+          "translation": "その二つのカテゴリーの境界は常に明確とは限らない。",
+          "root": "Greek kategoria = statement, class"
+        },
+        {
+          "word": "structure",
+          "meaning": "構造",
+          "pos": "noun",
+          "example": "The structure of the essay makes the argument easy to follow.",
+          "translation": "そのエッセイの構造により、議論を追いやすくなっている。",
+          "root": "struere = build"
+        },
+        {
+          "word": "model",
+          "meaning": "模型／モデル化する",
+          "pos": "noun/verb",
+          "example": "Scientists use models to explain complex systems.",
+          "translation": "科学者は複雑なシステムを説明するためにモデルを用いる。",
+          "root": "modulus = measure"
+        },
+        {
+          "word": "abstract",
+          "meaning": "抽象的な／抽出する",
+          "pos": "adjective/verb",
+          "example": "Abstract ideas become clearer when we connect them to examples.",
+          "translation": "抽象的な考えは、具体例と結びつけるとより明確になる。",
+          "root": "ab- + trahere = draw away"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 3,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day4",
@@ -51,14 +174,69 @@
       "title": "Day 4: Bias and Assumptions",
       "theme": "How hidden expectations shape what we see",
       "words": [
-        {"word":"bias","meaning":"偏り／先入観","pos":"noun","example":"A writer's bias can influence the way evidence is selected.","translation":"筆者の偏りは、証拠の選び方に影響を与えることがある。","root":"Old French biais = slant, oblique angle"},
-        {"word":"assumption","meaning":"前提／思い込み","pos":"noun","example":"We should examine the assumption behind the argument before accepting it.","translation":"その議論を受け入れる前に、その背後にある前提を検討すべきである。","root":"as- + sumere = take up; something taken as true"},
-        {"word":"stereotype","meaning":"固定観念／ステレオタイプ","pos":"noun","example":"A stereotype reduces a complex person to a simple image.","translation":"固定観念は、複雑な人間を単純なイメージに還元してしまう。","root":"stereo- = solid + type = model, impression"},
-        {"word":"prejudice","meaning":"偏見／先入観","pos":"noun","example":"Prejudice often appears before careful observation begins.","translation":"偏見は、注意深い観察が始まる前に現れることが多い。","root":"pre- + judge = judge before"},
-        {"word":"perspective","meaning":"視点／観点","pos":"noun","example":"Changing our perspective can change the meaning of the same event.","translation":"視点を変えると、同じ出来事の意味が変わることがある。","root":"per- + specere = look through"},
-        {"word":"expectation","meaning":"期待／予想","pos":"noun","example":"Our expectations can make some details more noticeable than others.","translation":"私たちの期待は、ある細部を他の細部より目立たせることがある。","root":"ex- + spectare = look out for"},
-        {"word":"tendency","meaning":"傾向","pos":"noun","example":"Humans have a tendency to find patterns even in random events.","translation":"人間には、偶然の出来事の中にもパターンを見出す傾向がある。","root":"tendere = stretch, move toward"}
-      ]
+        {
+          "word": "bias",
+          "meaning": "偏り／先入観",
+          "pos": "noun",
+          "example": "A writer's bias can influence the way evidence is selected.",
+          "translation": "筆者の偏りは、証拠の選び方に影響を与えることがある。",
+          "root": "Old French biais = slant, oblique angle"
+        },
+        {
+          "word": "assumption",
+          "meaning": "前提／思い込み",
+          "pos": "noun",
+          "example": "We should examine the assumption behind the argument before accepting it.",
+          "translation": "その議論を受け入れる前に、その背後にある前提を検討すべきである。",
+          "root": "as- + sumere = take up; something taken as true"
+        },
+        {
+          "word": "stereotype",
+          "meaning": "固定観念／ステレオタイプ",
+          "pos": "noun",
+          "example": "A stereotype reduces a complex person to a simple image.",
+          "translation": "固定観念は、複雑な人間を単純なイメージに還元してしまう。",
+          "root": "stereo- = solid + type = model, impression"
+        },
+        {
+          "word": "prejudice",
+          "meaning": "偏見／先入観",
+          "pos": "noun",
+          "example": "Prejudice often appears before careful observation begins.",
+          "translation": "偏見は、注意深い観察が始まる前に現れることが多い。",
+          "root": "pre- + judge = judge before"
+        },
+        {
+          "word": "perspective",
+          "meaning": "視点／観点",
+          "pos": "noun",
+          "example": "Changing our perspective can change the meaning of the same event.",
+          "translation": "視点を変えると、同じ出来事の意味が変わることがある。",
+          "root": "per- + specere = look through"
+        },
+        {
+          "word": "expectation",
+          "meaning": "期待／予想",
+          "pos": "noun",
+          "example": "Our expectations can make some details more noticeable than others.",
+          "translation": "私たちの期待は、ある細部を他の細部より目立たせることがある。",
+          "root": "ex- + spectare = look out for"
+        },
+        {
+          "word": "tendency",
+          "meaning": "傾向",
+          "pos": "noun",
+          "example": "Humans have a tendency to find patterns even in random events.",
+          "translation": "人間には、偶然の出来事の中にもパターンを見出す傾向がある。",
+          "root": "tendere = stretch, move toward"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 4,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day5",
@@ -66,14 +244,69 @@
       "title": "Day 5: Abstraction and Classification",
       "theme": "How the mind groups experience into ideas",
       "words": [
-        {"word":"abstraction","meaning":"抽象化／抽象概念","pos":"noun","example":"Abstraction allows us to think beyond particular examples.","translation":"抽象化によって、個別の例を超えて考えることができる。","root":"ab- + trahere = draw away"},
-        {"word":"category","meaning":"分類／カテゴリー","pos":"noun","example":"A category helps us organize many different objects under one idea.","translation":"カテゴリーは、多くの異なる物を一つの考えの下に整理するのに役立つ。","root":"Greek kategoria = class, statement"},
-        {"word":"classification","meaning":"分類／分類体系","pos":"noun","example":"Classification is not neutral; it reflects what a society considers important.","translation":"分類は中立ではなく、社会が何を重要と考えるかを反映する。","root":"classis = group + facere = make"},
-        {"word":"classify","meaning":"分類する","pos":"verb","example":"Scientists classify living things according to shared features.","translation":"科学者は共通する特徴に基づいて生物を分類する。","root":"classis = group + facere = make"},
-        {"word":"generalize","meaning":"一般化する","pos":"verb","example":"We must be careful not to generalize from too few examples.","translation":"少なすぎる例から一般化しないよう注意しなければならない。","root":"genus = kind, class"},
-        {"word":"distinction","meaning":"区別／相違","pos":"noun","example":"The distinction between fact and interpretation is central to critical reading.","translation":"事実と解釈の区別は、批判的読解の中心である。","root":"dis- + stinguere = mark apart"},
-        {"word":"feature","meaning":"特徴／特性","pos":"noun","example":"The most important feature of the model is its simplicity.","translation":"そのモデルの最も重要な特徴は単純さである。","root":"Old French faiture = form, make"}
-      ]
+        {
+          "word": "abstraction",
+          "meaning": "抽象化／抽象概念",
+          "pos": "noun",
+          "example": "Abstraction allows us to think beyond particular examples.",
+          "translation": "抽象化によって、個別の例を超えて考えることができる。",
+          "root": "ab- + trahere = draw away"
+        },
+        {
+          "word": "category",
+          "meaning": "分類／カテゴリー",
+          "pos": "noun",
+          "example": "A category helps us organize many different objects under one idea.",
+          "translation": "カテゴリーは、多くの異なる物を一つの考えの下に整理するのに役立つ。",
+          "root": "Greek kategoria = class, statement"
+        },
+        {
+          "word": "classification",
+          "meaning": "分類／分類体系",
+          "pos": "noun",
+          "example": "Classification is not neutral; it reflects what a society considers important.",
+          "translation": "分類は中立ではなく、社会が何を重要と考えるかを反映する。",
+          "root": "classis = group + facere = make"
+        },
+        {
+          "word": "classify",
+          "meaning": "分類する",
+          "pos": "verb",
+          "example": "Scientists classify living things according to shared features.",
+          "translation": "科学者は共通する特徴に基づいて生物を分類する。",
+          "root": "classis = group + facere = make"
+        },
+        {
+          "word": "generalize",
+          "meaning": "一般化する",
+          "pos": "verb",
+          "example": "We must be careful not to generalize from too few examples.",
+          "translation": "少なすぎる例から一般化しないよう注意しなければならない。",
+          "root": "genus = kind, class"
+        },
+        {
+          "word": "distinction",
+          "meaning": "区別／相違",
+          "pos": "noun",
+          "example": "The distinction between fact and interpretation is central to critical reading.",
+          "translation": "事実と解釈の区別は、批判的読解の中心である。",
+          "root": "dis- + stinguere = mark apart"
+        },
+        {
+          "word": "feature",
+          "meaning": "特徴／特性",
+          "pos": "noun",
+          "example": "The most important feature of the model is its simplicity.",
+          "translation": "そのモデルの最も重要な特徴は単純さである。",
+          "root": "Old French faiture = form, make"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 5,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day6",
@@ -81,14 +314,69 @@
       "title": "Day 6: Models and Frameworks",
       "theme": "Tools for seeing hidden structure",
       "words": [
-        {"word":"model","meaning":"モデル／模型","pos":"noun","example":"A model simplifies reality so that we can understand its structure.","translation":"モデルは現実を単純化し、その構造を理解できるようにする。","root":"modulus = small measure"},
-        {"word":"framework","meaning":"枠組み","pos":"noun","example":"A useful framework shows how different ideas are connected.","translation":"有用な枠組みは、異なる考えがどのように結びついているかを示す。","root":"frame + work = supporting structure"},
-        {"word":"structure","meaning":"構造","pos":"noun","example":"The structure of a system may be invisible at first glance.","translation":"システムの構造は、一見しただけでは見えないことがある。","root":"struere = build, arrange"},
-        {"word":"system","meaning":"体系／制度／システム","pos":"noun","example":"A change in one part of the system can affect the whole.","translation":"システムの一部の変化が全体に影響を与えることがある。","root":"Greek systema = things placed together"},
-        {"word":"mechanism","meaning":"仕組み／メカニズム","pos":"noun","example":"The mechanism behind the effect is still not fully understood.","translation":"その効果の背後にある仕組みは、まだ完全には理解されていない。","root":"Greek mechane = machine, device"},
-        {"word":"component","meaning":"構成要素","pos":"noun","example":"Each component plays a different role in the larger structure.","translation":"それぞれの構成要素は、より大きな構造の中で異なる役割を果たす。","root":"com- + ponere = put together"},
-        {"word":"relation","meaning":"関係／関連","pos":"noun","example":"Meaning often emerges from the relation between words, not from one word alone.","translation":"意味は一語だけからではなく、語と語の関係から生まれることが多い。","root":"re- + ferre/latum = carry back, connect"}
-      ]
+        {
+          "word": "model",
+          "meaning": "モデル／模型",
+          "pos": "noun",
+          "example": "A model simplifies reality so that we can understand its structure.",
+          "translation": "モデルは現実を単純化し、その構造を理解できるようにする。",
+          "root": "modulus = small measure"
+        },
+        {
+          "word": "framework",
+          "meaning": "枠組み",
+          "pos": "noun",
+          "example": "A useful framework shows how different ideas are connected.",
+          "translation": "有用な枠組みは、異なる考えがどのように結びついているかを示す。",
+          "root": "frame + work = supporting structure"
+        },
+        {
+          "word": "structure",
+          "meaning": "構造",
+          "pos": "noun",
+          "example": "The structure of a system may be invisible at first glance.",
+          "translation": "システムの構造は、一見しただけでは見えないことがある。",
+          "root": "struere = build, arrange"
+        },
+        {
+          "word": "system",
+          "meaning": "体系／制度／システム",
+          "pos": "noun",
+          "example": "A change in one part of the system can affect the whole.",
+          "translation": "システムの一部の変化が全体に影響を与えることがある。",
+          "root": "Greek systema = things placed together"
+        },
+        {
+          "word": "mechanism",
+          "meaning": "仕組み／メカニズム",
+          "pos": "noun",
+          "example": "The mechanism behind the effect is still not fully understood.",
+          "translation": "その効果の背後にある仕組みは、まだ完全には理解されていない。",
+          "root": "Greek mechane = machine, device"
+        },
+        {
+          "word": "component",
+          "meaning": "構成要素",
+          "pos": "noun",
+          "example": "Each component plays a different role in the larger structure.",
+          "translation": "それぞれの構成要素は、より大きな構造の中で異なる役割を果たす。",
+          "root": "com- + ponere = put together"
+        },
+        {
+          "word": "relation",
+          "meaning": "関係／関連",
+          "pos": "noun",
+          "example": "Meaning often emerges from the relation between words, not from one word alone.",
+          "translation": "意味は一語だけからではなく、語と語の関係から生まれることが多い。",
+          "root": "re- + ferre/latum = carry back, connect"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 6,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
     },
     {
       "id": "unit1-day7",
@@ -96,15 +384,589 @@
       "title": "Day 7: Meta-cognition and Reflection",
       "theme": "Thinking about how we think and interpret",
       "words": [
-        {"word":"metacognition","meaning":"メタ認知／自分の思考を考えること","pos":"noun","example":"Metacognition helps learners notice how they understand a difficult text.","translation":"メタ認知は、学習者が難しい文章をどのように理解しているかに気づく助けとなる。","root":"meta- = beyond, about + cognition = knowing"},
-        {"word":"interpretation","meaning":"解釈","pos":"noun","example":"Every interpretation should be tested against the evidence in the text.","translation":"すべての解釈は、本文中の根拠と照らし合わせて検証されるべきである。","root":"inter- + pretari = explain between"},
-        {"word":"reflection","meaning":"振り返り／反省／反映","pos":"noun","example":"Reflection turns experience into learning.","translation":"振り返りは、経験を学びへと変える。","root":"re- + flectere = bend back"},
-        {"word":"awareness","meaning":"気づき／認識","pos":"noun","example":"Awareness of one's own bias is the first step toward better judgment.","translation":"自分自身の偏りへの気づきは、よりよい判断への第一歩である。","root":"aware = watchful, informed"},
-        {"word":"monitor","meaning":"観察する／監視する","pos":"verb","example":"Good readers monitor their understanding while they read.","translation":"優れた読み手は、読んでいる間に自分の理解を確認する。","root":"monere = warn, remind"},
-        {"word":"evaluate","meaning":"評価する／見極める","pos":"verb","example":"We need to evaluate whether the conclusion follows from the evidence.","translation":"結論が証拠から導かれるかどうかを評価する必要がある。","root":"e- + value = determine worth"},
-        {"word":"insight","meaning":"洞察／見抜く力","pos":"noun","example":"Insight often comes when we question our first interpretation.","translation":"洞察は、最初の解釈を疑うときに生まれることが多い。","root":"in- + sight = seeing inward"},
-        {"word":"revision","meaning":"修正／見直し","pos":"noun","example":"Revision is not failure; it is evidence that thinking has improved.","translation":"修正は失敗ではなく、思考が改善した証拠である。","root":"re- + videre = see again"}
+        {
+          "word": "metacognition",
+          "meaning": "メタ認知／自分の思考を考えること",
+          "pos": "noun",
+          "example": "Metacognition helps learners notice how they understand a difficult text.",
+          "translation": "メタ認知は、学習者が難しい文章をどのように理解しているかに気づく助けとなる。",
+          "root": "meta- = beyond, about + cognition = knowing"
+        },
+        {
+          "word": "interpretation",
+          "meaning": "解釈",
+          "pos": "noun",
+          "example": "Every interpretation should be tested against the evidence in the text.",
+          "translation": "すべての解釈は、本文中の根拠と照らし合わせて検証されるべきである。",
+          "root": "inter- + pretari = explain between"
+        },
+        {
+          "word": "reflection",
+          "meaning": "振り返り／反省／反映",
+          "pos": "noun",
+          "example": "Reflection turns experience into learning.",
+          "translation": "振り返りは、経験を学びへと変える。",
+          "root": "re- + flectere = bend back"
+        },
+        {
+          "word": "awareness",
+          "meaning": "気づき／認識",
+          "pos": "noun",
+          "example": "Awareness of one's own bias is the first step toward better judgment.",
+          "translation": "自分自身の偏りへの気づきは、よりよい判断への第一歩である。",
+          "root": "aware = watchful, informed"
+        },
+        {
+          "word": "monitor",
+          "meaning": "観察する／監視する",
+          "pos": "verb",
+          "example": "Good readers monitor their understanding while they read.",
+          "translation": "優れた読み手は、読んでいる間に自分の理解を確認する。",
+          "root": "monere = warn, remind"
+        },
+        {
+          "word": "evaluate",
+          "meaning": "評価する／見極める",
+          "pos": "verb",
+          "example": "We need to evaluate whether the conclusion follows from the evidence.",
+          "translation": "結論が証拠から導かれるかどうかを評価する必要がある。",
+          "root": "e- + value = determine worth"
+        },
+        {
+          "word": "insight",
+          "meaning": "洞察／見抜く力",
+          "pos": "noun",
+          "example": "Insight often comes when we question our first interpretation.",
+          "translation": "洞察は、最初の解釈を疑うときに生まれることが多い。",
+          "root": "in- + sight = seeing inward"
+        },
+        {
+          "word": "revision",
+          "meaning": "修正／見直し",
+          "pos": "noun",
+          "example": "Revision is not failure; it is evidence that thinking has improved.",
+          "translation": "修正は失敗ではなく、思考が改善した証拠である。",
+          "root": "re- + videre = see again"
+        }
+      ],
+      "unitId": "unit1",
+      "unitNumber": 1,
+      "unitDay": 7,
+      "unitTitle": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
+    },
+    {
+      "id": "unit2-day1",
+      "day": 8,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 1,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 1: Symbols and Signs",
+      "theme": "Language as shared signs of meaning",
+      "words": [
+        {
+          "word": "language",
+          "meaning": "言語／ことば",
+          "pos": "noun",
+          "example": "Language does not simply label the world; it also shapes how we notice it.",
+          "translation": "言語は単に世界にラベルを貼るだけでなく、私たちが世界に気づく方法も形作る。",
+          "root": "lingua = tongue; speech as a tool for sharing thought"
+        },
+        {
+          "word": "symbol",
+          "meaning": "象徴／記号",
+          "pos": "noun",
+          "example": "A national flag is a symbol because people share its meaning.",
+          "translation": "国旗は、人々がその意味を共有しているため象徴である。",
+          "root": "sym- = together + bol- = throw → meanings thrown together and shared"
+        },
+        {
+          "word": "sign",
+          "meaning": "印／記号／兆候",
+          "pos": "noun",
+          "example": "A sign points beyond itself to something else.",
+          "translation": "記号は、それ自体を超えて別のものを指し示す。",
+          "root": "signum = mark → a visible mark that points to meaning"
+        },
+        {
+          "word": "signal",
+          "meaning": "信号／合図",
+          "pos": "noun/verb",
+          "example": "A pause in conversation can signal hesitation or disagreement.",
+          "translation": "会話の中の沈黙は、ためらいや不同意の合図になることがある。",
+          "root": "signum = mark → a marked cue sent to others"
+        },
+        {
+          "word": "code",
+          "meaning": "符号／規則体系",
+          "pos": "noun",
+          "example": "A code allows a group to connect signs with meanings.",
+          "translation": "コードは、集団が記号と意味を結びつけることを可能にする。",
+          "root": "codex = book, system of rules → a rulebook for meaning"
+        },
+        {
+          "word": "refer",
+          "meaning": "指し示す／言及する",
+          "pos": "verb",
+          "example": "The word does not contain the object; it refers to it.",
+          "translation": "単語は対象物そのものを含むのではなく、それを指し示している。",
+          "root": "re- = back + ferre = carry → carry the mind back to something"
+        },
+        {
+          "word": "reference",
+          "meaning": "指示対象／参照",
+          "pos": "noun",
+          "example": "The reference of a word may change depending on the situation.",
+          "translation": "単語の指示対象は、状況によって変わることがある。",
+          "root": "refer + -ence → the thing a word carries us toward"
+        }
       ]
+    },
+    {
+      "id": "unit2-day2",
+      "day": 9,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 2,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 2: Communication and Expression",
+      "theme": "How ideas move between minds",
+      "words": [
+        {
+          "word": "communication",
+          "meaning": "コミュニケーション／伝達",
+          "pos": "noun",
+          "example": "Communication is not only sending words but also building shared understanding.",
+          "translation": "コミュニケーションとは、単に言葉を送ることではなく、共通理解を築くことでもある。",
+          "root": "com- = together + munis = service, duty → making meaning common"
+        },
+        {
+          "word": "expression",
+          "meaning": "表現",
+          "pos": "noun",
+          "example": "A facial expression can communicate emotion before words appear.",
+          "translation": "表情は、言葉が現れる前に感情を伝えることができる。",
+          "root": "ex- = out + press = push → pushing inner meaning outward"
+        },
+        {
+          "word": "message",
+          "meaning": "伝言／メッセージ",
+          "pos": "noun",
+          "example": "The same message can sound polite or rude depending on tone.",
+          "translation": "同じメッセージでも、口調によって丁寧にも失礼にも聞こえる。",
+          "root": "missus = sent → something sent from one mind to another"
+        },
+        {
+          "word": "sender",
+          "meaning": "送り手／発信者",
+          "pos": "noun",
+          "example": "The sender must consider what the audience already knows.",
+          "translation": "発信者は、聞き手がすでに何を知っているかを考慮しなければならない。",
+          "root": "send = cause to go → the starting point of a message"
+        },
+        {
+          "word": "receiver",
+          "meaning": "受け手／受信者",
+          "pos": "noun",
+          "example": "Meaning is completed when the receiver interprets the message.",
+          "translation": "意味は、受け手がメッセージを解釈するときに完成する。",
+          "root": "re- + ceive = take back/in → the mind that takes in a message"
+        },
+        {
+          "word": "interaction",
+          "meaning": "相互作用／やり取り",
+          "pos": "noun",
+          "example": "Classroom discussion is an interaction between speakers, texts, and ideas.",
+          "translation": "教室での議論は、話し手・文章・考えの間の相互作用である。",
+          "root": "inter- = between + act = do → actions happening between people"
+        },
+        {
+          "word": "interpretive",
+          "meaning": "解釈に関わる",
+          "pos": "adjective",
+          "example": "Reading is an interpretive act, not a mechanical reaction to words.",
+          "translation": "読解は、言葉への機械的反応ではなく、解釈に関わる行為である。",
+          "root": "inter- + pret = explain between → meaning built between text and reader"
+        }
+      ]
+    },
+    {
+      "id": "unit2-day3",
+      "day": 10,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 3,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 3: Narrative and Discourse",
+      "theme": "Meaning across sentences and situations",
+      "words": [
+        {
+          "word": "narrative",
+          "meaning": "物語／語り",
+          "pos": "noun",
+          "example": "A narrative gives events a shape and a direction.",
+          "translation": "物語は、出来事に形と方向性を与える。",
+          "root": "narrare = tell → events organized as tellable meaning"
+        },
+        {
+          "word": "discourse",
+          "meaning": "談話／言説",
+          "pos": "noun",
+          "example": "Public discourse influences what a society considers normal.",
+          "translation": "公共の言説は、社会が何を普通と考えるかに影響を与える。",
+          "root": "dis- = apart + currere = run → ideas running across people and contexts"
+        },
+        {
+          "word": "utterance",
+          "meaning": "発話",
+          "pos": "noun",
+          "example": "An utterance can mean more than the sentence printed on a page.",
+          "translation": "発話は、紙面に印刷された文以上の意味を持つことがある。",
+          "root": "utter = put out, express → meaning released into a situation"
+        },
+        {
+          "word": "contextual",
+          "meaning": "文脈上の／状況的な",
+          "pos": "adjective",
+          "example": "The word has a contextual meaning that is clear only in the whole passage.",
+          "translation": "その語には、文章全体の中で初めて明らかになる文脈上の意味がある。",
+          "root": "con- + texere = weave together → meaning woven with surroundings"
+        },
+        {
+          "word": "sequence",
+          "meaning": "連続／順序",
+          "pos": "noun",
+          "example": "The sequence of events changes how readers judge the character.",
+          "translation": "出来事の順序は、読者が登場人物をどう判断するかを変える。",
+          "root": "sequi = follow → one thing following another"
+        },
+        {
+          "word": "coherence",
+          "meaning": "一貫性／まとまり",
+          "pos": "noun",
+          "example": "Coherence helps readers see how each sentence belongs to the whole.",
+          "translation": "一貫性は、各文が全体にどう属しているかを読者に見せる。",
+          "root": "co- = together + haerere = stick → ideas sticking together"
+        },
+        {
+          "word": "viewpoint",
+          "meaning": "視点／見方",
+          "pos": "noun",
+          "example": "Changing the viewpoint changes the moral meaning of the story.",
+          "translation": "視点を変えると、物語の道徳的意味が変わる。",
+          "root": "view + point → the point from which meaning is seen"
+        }
+      ]
+    },
+    {
+      "id": "unit2-day4",
+      "day": 11,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 4,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 4: Rhetoric and Persuasion",
+      "theme": "How words guide judgment",
+      "words": [
+        {
+          "word": "rhetoric",
+          "meaning": "修辞／説得の技法",
+          "pos": "noun",
+          "example": "Rhetoric can clarify an argument or hide a weak point.",
+          "translation": "修辞は議論を明確にすることも、弱点を隠すこともある。",
+          "root": "Greek rhetor = public speaker → language designed to move an audience"
+        },
+        {
+          "word": "persuasion",
+          "meaning": "説得",
+          "pos": "noun",
+          "example": "Persuasion often works by connecting evidence with values.",
+          "translation": "説得はしばしば、証拠を価値観と結びつけることで機能する。",
+          "root": "per- = thoroughly + suadere = urge → leading the mind toward agreement"
+        },
+        {
+          "word": "implication",
+          "meaning": "含意／暗示",
+          "pos": "noun",
+          "example": "The implication is clear, although the writer never states it directly.",
+          "translation": "筆者が直接述べていなくても、その含意は明らかである。",
+          "root": "in- + plicare = fold in → meaning folded inside words"
+        },
+        {
+          "word": "claim",
+          "meaning": "主張",
+          "pos": "noun/verb",
+          "example": "A strong claim must be supported by evidence and reasoning.",
+          "translation": "強い主張は、証拠と推論によって支えられなければならない。",
+          "root": "clamare = call out → an idea publicly called for acceptance"
+        },
+        {
+          "word": "appeal",
+          "meaning": "訴えかけ／訴える",
+          "pos": "noun/verb",
+          "example": "The advertisement makes an emotional appeal rather than a logical argument.",
+          "translation": "その広告は論理的議論ではなく、感情への訴えかけを行っている。",
+          "root": "appellare = address, call to → calling toward the audience"
+        },
+        {
+          "word": "emphasis",
+          "meaning": "強調",
+          "pos": "noun",
+          "example": "Emphasis can make one part of a message seem more important than the rest.",
+          "translation": "強調は、メッセージの一部を他の部分より重要に見せることがある。",
+          "root": "Greek emphainein = show in → making meaning stand out"
+        },
+        {
+          "word": "tone",
+          "meaning": "口調／論調",
+          "pos": "noun",
+          "example": "The tone of a passage can reveal the writer's attitude.",
+          "translation": "文章の論調は、筆者の態度を明らかにすることがある。",
+          "root": "tonus = sound, tension → the emotional pressure of language"
+        }
+      ]
+    },
+    {
+      "id": "unit2-day5",
+      "day": 12,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 5,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 5: Translation and Ambiguity",
+      "theme": "When meaning moves between languages",
+      "words": [
+        {
+          "word": "translation",
+          "meaning": "翻訳／移し替え",
+          "pos": "noun",
+          "example": "Translation carries meaning across languages, but it also changes what is emphasized.",
+          "translation": "翻訳は意味を言語間で運ぶが、何が強調されるかも変える。",
+          "root": "trans- = across + latus = carried → meaning carried across"
+        },
+        {
+          "word": "meaning",
+          "meaning": "意味",
+          "pos": "noun",
+          "example": "Meaning is not always located in a single word.",
+          "translation": "意味は、必ずしも一つの単語の中にあるわけではない。",
+          "root": "mean = intend, signify → what a sign is made to point toward"
+        },
+        {
+          "word": "ambiguity",
+          "meaning": "曖昧さ／多義性",
+          "pos": "noun",
+          "example": "Ambiguity can create misunderstanding, but it can also make poetry richer.",
+          "translation": "曖昧さは誤解を生むこともあるが、詩をより豊かにすることもある。",
+          "root": "ambi- = both + agere = drive → meaning pulled in two directions"
+        },
+        {
+          "word": "equivalent",
+          "meaning": "同等のもの／相当する",
+          "pos": "noun/adjective",
+          "example": "There is no perfect equivalent for every word in another language.",
+          "translation": "別の言語において、すべての語に完全に相当する語があるわけではない。",
+          "root": "equi- = equal + valere = be strong/worth → equal in value"
+        },
+        {
+          "word": "nuance",
+          "meaning": "微妙な意味合い／ニュアンス",
+          "pos": "noun",
+          "example": "The nuance of a word may disappear in a literal translation.",
+          "translation": "単語のニュアンスは、直訳では消えてしまうことがある。",
+          "root": "nubes = cloud → a slight shade of meaning"
+        },
+        {
+          "word": "literal",
+          "meaning": "文字通りの",
+          "pos": "adjective",
+          "example": "A literal meaning is not always the most important meaning.",
+          "translation": "文字通りの意味が常に最も重要な意味とは限らない。",
+          "root": "littera = letter → tied closely to the written letters"
+        },
+        {
+          "word": "connotation",
+          "meaning": "含み／言外の意味",
+          "pos": "noun",
+          "example": "The word has a positive connotation in one culture and a negative one in another.",
+          "translation": "その語は、ある文化では肯定的な含みを持ち、別の文化では否定的な含みを持つ。",
+          "root": "con- = together + notare = mark → meanings marked together with a word"
+        }
+      ]
+    },
+    {
+      "id": "unit2-day6",
+      "day": 13,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 6,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 6: Metaphor and Representation",
+      "theme": "How language makes abstract thought visible",
+      "words": [
+        {
+          "word": "metaphor",
+          "meaning": "比喩／メタファー",
+          "pos": "noun",
+          "example": "A metaphor lets us understand one idea through another.",
+          "translation": "比喩は、ある考えを別の考えを通して理解させる。",
+          "root": "meta- = across + pherein = carry → carrying meaning across domains"
+        },
+        {
+          "word": "representation",
+          "meaning": "表象／表現",
+          "pos": "noun",
+          "example": "A map is a representation of space, not the space itself.",
+          "translation": "地図は空間の表象であって、空間そのものではない。",
+          "root": "re- + present = present again → making something present in another form"
+        },
+        {
+          "word": "abstractive",
+          "meaning": "抽象化する／抽象的な",
+          "pos": "adjective",
+          "example": "Abstractive language removes details in order to show a larger pattern.",
+          "translation": "抽象的な言語は、より大きなパターンを示すために細部を取り除く。",
+          "root": "ab- + trahere = draw away → pulling thought away from particulars"
+        },
+        {
+          "word": "image",
+          "meaning": "イメージ／像",
+          "pos": "noun",
+          "example": "An image in language can make an invisible idea feel concrete.",
+          "translation": "言語の中のイメージは、見えない考えを具体的に感じさせることがある。",
+          "root": "imago = likeness → a mental picture that carries meaning"
+        },
+        {
+          "word": "analogy",
+          "meaning": "類推／たとえ",
+          "pos": "noun",
+          "example": "An analogy explains a new idea by comparing it with a familiar one.",
+          "translation": "類推は、新しい考えを身近なものと比較して説明する。",
+          "root": "ana- = according to + logos = relation, reason → reasoning by relation"
+        },
+        {
+          "word": "domain",
+          "meaning": "領域／分野",
+          "pos": "noun",
+          "example": "A metaphor transfers meaning from one domain to another.",
+          "translation": "比喩は、一つの領域から別の領域へ意味を移す。",
+          "root": "dominus = lord, master → an area under control"
+        },
+        {
+          "word": "concrete",
+          "meaning": "具体的な",
+          "pos": "adjective",
+          "example": "Concrete examples help students grasp abstract concepts.",
+          "translation": "具体的な例は、生徒が抽象概念を理解する助けになる。",
+          "root": "con- + crescere = grow together → something formed into a solid shape"
+        }
+      ]
+    },
+    {
+      "id": "unit2-day7",
+      "day": 14,
+      "unitId": "unit2",
+      "unitNumber": 2,
+      "unitDay": 7,
+      "unitTitle": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?",
+      "title": "Unit 2 Day 7: Media and Information",
+      "theme": "How messages travel through society",
+      "words": [
+        {
+          "word": "media",
+          "meaning": "メディア／媒体",
+          "pos": "noun",
+          "example": "Media shape not only what information we receive but also how we interpret it.",
+          "translation": "メディアは、私たちが受け取る情報だけでなく、それをどう解釈するかも形作る。",
+          "root": "medium = middle → something in the middle that carries messages"
+        },
+        {
+          "word": "information",
+          "meaning": "情報",
+          "pos": "noun",
+          "example": "Information becomes knowledge only when it is organized and interpreted.",
+          "translation": "情報は、整理され解釈されて初めて知識になる。",
+          "root": "in- + formare = shape → giving form to the mind"
+        },
+        {
+          "word": "transmit",
+          "meaning": "伝達する／送信する",
+          "pos": "verb",
+          "example": "A network can transmit messages faster than individuals can evaluate them.",
+          "translation": "ネットワークは、個人がそれを評価するより速くメッセージを伝達できる。",
+          "root": "trans- = across + mittere = send → send across distance"
+        },
+        {
+          "word": "circulate",
+          "meaning": "循環する／広まる",
+          "pos": "verb",
+          "example": "Rumors circulate quickly when people share them without checking sources.",
+          "translation": "人々が情報源を確認せずに共有すると、噂はすばやく広まる。",
+          "root": "circulus = circle → move around in a social circle"
+        },
+        {
+          "word": "audience",
+          "meaning": "聴衆／読者／受け手",
+          "pos": "noun",
+          "example": "Writers choose examples according to the audience they imagine.",
+          "translation": "書き手は、自分が想定する読者に合わせて例を選ぶ。",
+          "root": "audire = hear → those who hear or receive a message"
+        },
+        {
+          "word": "platform",
+          "meaning": "平台／発信基盤／プラットフォーム",
+          "pos": "noun",
+          "example": "A platform can amplify some voices and make others less visible.",
+          "translation": "プラットフォームは、ある声を増幅し、別の声を見えにくくすることがある。",
+          "root": "plat = flat + form = shape → a raised surface for messages"
+        },
+        {
+          "word": "network",
+          "meaning": "ネットワーク／網状組織",
+          "pos": "noun",
+          "example": "Meaning spreads through a network of people, texts, and technologies.",
+          "translation": "意味は、人・文章・技術のネットワークを通じて広がる。",
+          "root": "net + work → connected threads that carry movement"
+        },
+        {
+          "word": "literacy",
+          "meaning": "読み書き能力／情報を読み解く力",
+          "pos": "noun",
+          "example": "Media literacy helps us ask who created a message and for what purpose.",
+          "translation": "メディアリテラシーは、誰が何の目的でメッセージを作ったのかを問う助けになる。",
+          "root": "littera = letter → the power to read signs critically"
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "unit1",
+      "title": "Unit 1: Perception Sea",
+      "seaTitle": "Perception Sea",
+      "coreQuestion": "Do we see reality itself?"
+    },
+    {
+      "id": "unit2",
+      "title": "Unit 2: Language Sea",
+      "seaTitle": "Language Sea",
+      "coreQuestion": "How does language create meaning?"
     }
   ]
 }

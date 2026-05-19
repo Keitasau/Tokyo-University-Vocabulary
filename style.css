@@ -1,6 +1,7 @@
 :root {
   --bg1: #031726;
   --bg2: #06324a;
+  --bg3: #092944;
   --card: rgba(255, 255, 255, 0.10);
   --card2: rgba(255, 255, 255, 0.16);
   --line: rgba(255, 255, 255, 0.20);
@@ -24,7 +25,8 @@ body {
   background:
     radial-gradient(circle at 20% 10%, rgba(126, 231, 255, 0.24), transparent 30%),
     radial-gradient(circle at 90% 0%, rgba(110, 210, 255, 0.16), transparent 24%),
-    linear-gradient(180deg, var(--bg2), var(--bg1) 58%, #010813);
+    radial-gradient(circle at 80% 55%, rgba(185, 244, 209, 0.10), transparent 28%),
+    linear-gradient(180deg, var(--bg2), var(--bg3) 46%, var(--bg1) 70%, #010813);
   overflow-x: hidden;
 }
 
@@ -65,7 +67,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   gap: 12px;
 }
 .app-title { font-weight: 800; letter-spacing: 0.02em; }
-.unit-title, .current-area, .eyebrow, small, .pos, .translation, .root { color: var(--muted); }
+.unit-title, .current-area, .eyebrow, small, .pos, .translation, .root, .core-question, .overall-progress { color: var(--muted); }
 .ghost-btn { padding: 8px 12px; border-radius: 999px; }
 .hero-main { margin-top: 10px; align-items: flex-end; }
 h1, h2, p { margin-top: 0; }
@@ -84,6 +86,8 @@ p { line-height: 1.75; color: #d8eef7; }
   box-shadow: 0 10px 26px rgba(126, 231, 255, 0.22);
 }
 .current-area { margin: 8px 0 10px; font-size: 0.92rem; }
+.core-question { margin: 4px 0 0; font-size: 0.92rem; font-style: italic; }
+.overall-progress { font-size: 0.82rem; text-align: right; opacity: 0.92; }
 .sea-progress { display: grid; gap: 6px; }
 .bar-shell { height: 12px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.12); border: 1px solid var(--line); }
 .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
@@ -130,7 +134,7 @@ p { line-height: 1.75; color: #d8eef7; }
 .mode-icon { font-size: 1.6rem; }
 .mode-card strong { font-size: 1.05rem; }
 .day-row { grid-template-columns: repeat(7, 1fr); margin: 14px 0; }
-.day-btn { padding: 10px 6px; border-radius: 14px; display: grid; gap: 2px; }
+.day-btn { padding: 10px 6px; border-radius: 14px; display: grid; gap: 2px; min-height: 60px; }
 .day-btn.active { border-color: var(--accent); background: rgba(126, 231, 255, 0.15); }
 .day-btn.done { border-color: rgba(153, 242, 200, 0.55); }
 .primary {
