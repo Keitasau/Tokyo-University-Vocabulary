@@ -288,6 +288,74 @@
     return Math.round((done / total) * 100);
   }
 
+
+  function unitProgressById(unitId) {
+    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
+    if (!unitDays.length) return 0;
+    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
+    return Math.round((done / unitDays.length) * 100);
+  }
+
+  function unitDayCounts(unitId) {
+    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
+    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
+    var unlocked = unitDays.filter(function (d) { return state.unlocked[d.id]; }).length;
+    return { total: unitDays.length, done: done, unlocked: unlocked };
+  }
+
+  function firstUnlockedDayIndexForUnit(unitId) {
+    var found = -1;
+    data.days.forEach(function (day, index) {
+      if (day.unitId === unitId && state.unlocked[day.id] && found === -1) found = index;
+    });
+    return found;
+  }
+
+  function nextOpenDayIndexForUnit(unitId) {
+    var fallback = -1;
+    var target = -1;
+    data.days.forEach(function (day, index) {
+      if (day.unitId !== unitId || !state.unlocked[day.id]) return;
+      if (fallback === -1) fallback = index;
+      if (!state.completed[day.id] && target === -1) target = index;
+    });
+    return target !== -1 ? target : fallback;
+  }
+
+  function seaSelectionHtml() {
+    var implementedUnits = Array.isArray(data.units) && data.units.length ? data.units : [
+      { id: 'unit1', title: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', coreQuestion: 'Do we see reality itself?' },
+      { id: 'unit2', title: 'Unit 2: Language Sea', seaTitle: 'Language Sea', coreQuestion: 'How does language create meaning?' }
+    ];
+    var comingSoon = [
+      { id: 'society', seaTitle: 'Society Sea', coreQuestion: 'How do individuals and systems shape each other?' },
+      { id: 'logic', seaTitle: 'Logic Sea', coreQuestion: 'How do reasons connect?' },
+      { id: 'ai', seaTitle: 'AI Sea', coreQuestion: 'What does intelligence mean in the age of machines?' }
+    ];
+    return '<section class="card sea-select-card"><div class="sea-map-bg" aria-hidden="true"></div><div class="eyebrow">Sea Selection</div><h2>知性の海域を選ぶ</h2><p>Perception SeaからLanguage Seaへ。単語を覚えるだけでなく、評論を読むための概念ネットワークを探索します。</p>' +
+      '<div class="sea-grid">' + implementedUnits.map(function (unit, i) { return seaCardHtml(unit, i + 1, false); }).join('') + comingSoon.map(function (unit, i) { return seaCardHtml(unit, implementedUnits.length + i + 1, true); }).join('') + '</div></section>';
+  }
+
+  function seaCardHtml(unit, number, lockedPlaceholder) {
+    var unitId = unit.id;
+    var progress = lockedPlaceholder ? 0 : unitProgressById(unitId);
+    var counts = lockedPlaceholder ? { total: 7, done: 0, unlocked: 0 } : unitDayCounts(unitId);
+    var selectableIndex = lockedPlaceholder ? -1 : nextOpenDayIndexForUnit(unitId);
+    var open = selectableIndex !== -1;
+    var active = !lockedPlaceholder && currentDay().unitId === unitId;
+    var icon = lockedPlaceholder || !open ? '🔒' : '🌊';
+    var status = lockedPlaceholder ? 'COMING SOON' : (open ? (progress === 100 ? 'FULLY EXPLORED' : 'OPEN') : 'LOCKED');
+    var barWidth = Math.max(0, Math.min(100, progress));
+    return '<button class="sea-card ' + (active ? 'active ' : '') + (lockedPlaceholder || !open ? 'locked ' : '') + '" data-action="selectUnit" data-unit-id="' + h(unitId) + '" ' + (open ? '' : 'disabled') + '>' +
+      '<div class="sea-card-top"><span class="sea-icon">' + icon + '</span><span class="sea-number">Sea ' + h(number) + '</span></div>' +
+      '<strong>' + h(unit.seaTitle || unit.title || unitId) + '</strong>' +
+      '<small>' + h(unit.coreQuestion || 'Coming soon') + '</small>' +
+      '<div class="sea-card-progress"><span>' + h(progress) + '% explored</span><span>' + h(counts.done) + ' / ' + h(counts.total) + '</span></div>' +
+      '<div class="mini-bar"><div style="width:' + h(barWidth) + '%"></div></div>' +
+      '<div class="sea-status">' + h(status) + '</div>' +
+      '</button>';
+  }
+
   function seaProgressHtml(progress, day) {
     var unitProgress = unitProgressPercent(day);
     var filled = Math.max(0, Math.min(10, Math.round(unitProgress / 10)));
@@ -315,7 +383,7 @@
     var status = completed ? 'CLEAR：この海域の探索は完了しました。次の海へ進めます。' : 'Flashcard / Quiz / Listening をすべてCLEARすると次の海域が解放されます。';
     var area = seaAreaName(day);
     var celebration = lastClearEvent && lastClearEvent.dayId === day.id ? dayClearEventHtml(lastClearEvent) : '';
-    return '' + celebration +
+    return '' + celebration + seaSelectionHtml() +
       '<section class="card home-card"><div class="eyebrow">Unit ' + h(day.unitNumber || 1) + ' Day ' + h(day.unitDay || day.day) + ' / 7 ・ Voyage Day ' + h(day.day) + ' ・ ' + h(day.words.length) + ' words</div>' +
       '<h2>今日の海域：' + h(area) + '</h2><p>' + h(status) + '</p>' +
       '<div class="status-line"><span>Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(day.seaTitle || 'Learning Sea') + ' ' + h(unitProgressPercent(day)) + '% explored</span></div>' +
@@ -412,6 +480,7 @@
       return;
     }
     if (action === 'selectDay') { selectDay(Number(target.getAttribute('data-index'))); return; }
+    if (action === 'selectUnit') { selectUnit(target.getAttribute('data-unit-id')); return; }
     if (action === 'startQuiz') { startQuiz(target.getAttribute('data-mode')); return; }
     if (action === 'answer') { answerQuiz(Number(target.getAttribute('data-choice')), false); return; }
     if (action === 'nextQuestion') { nextQuestion(); return; }
@@ -424,6 +493,12 @@
     if (action === 'reset') { resetProgress(); return; }
     if (action === 'startWeakReview') { startWeakReview(); return; }
     if (action === 'clearWeakConfirm') { if (confirm('Weak Wordsだけを空にします。progressionには影響しません。')) { clearWeakWords(); lastWeakClear = false; render(); } return; }
+  }
+
+  function selectUnit(unitId) {
+    var index = nextOpenDayIndexForUnit(unitId);
+    if (index === -1) return;
+    selectDay(index);
   }
 
   function selectDay(index) {
