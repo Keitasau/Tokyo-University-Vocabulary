@@ -224,6 +224,7 @@
     if (!app || !data || !state || !weakState) return;
     var day = currentDay();
     app.innerHTML = '';
+    app.innerHTML = '<div class="semantic-atmosphere"><span class="particle p1"></span><span class="particle p2"></span><span class="particle p3"></span><span class="particle p4"></span><span class="particle p5"></span></div>';
     app.appendChild(buildHeader(day));
     var main = document.createElement('main');
     main.className = 'main';
@@ -476,7 +477,10 @@
     return '<section class="card flash-wrap"><div class="eyebrow">' + (safeIndex + 1) + ' / ' + day.words.length + '</div>' +
       '<button class="flash-card" data-action="flip">' +
       (!flashFlipped ? '<div class="word-big">' + h(word.word) + '</div><div class="pos">' + h(word.pos || '') + '</div><p>タップして意味を見る</p>' : '<div class="meaning-big">' + h(word.meaning) + '</div><p class="example">' + h(word.example || '') + '</p><p class="translation">' + h(word.translation || '') + '</p><div class="root">' + h(word.root || '') + '</div>') +
-      '</button><div class="button-row"><button data-action="prevCard" ' + (safeIndex === 0 ? 'disabled' : '') + '>前へ</button><button data-action="speak" data-word="' + h(word.word) + '">音声</button>' +
+      '</button>' +
+      connectedConceptsHtml(word) +
+      knowledgeGraphHtml(word) +
+      '<div class="button-row"><button data-action="prevCard" ' + (safeIndex === 0 ? 'disabled' : '') + '>前へ</button><button data-action="speak" data-word="' + h(word.word) + '">音声</button>' +
       (safeIndex < day.words.length - 1 ? '<button data-action="nextCard">次へ</button>' : '<button class="primary" data-action="clearFlash">Flashcard CLEAR</button>') + '</div>' +
       (clear ? '<p class="done-note">Flashcard CLEAR済みです。</p>' : '') + '</section>';
   }
@@ -530,7 +534,16 @@
     if (action === 'answer') { answerQuiz(Number(target.getAttribute('data-choice')), false); return; }
     if (action === 'nextQuestion') { nextQuestion(); return; }
     if (action === 'speak') { speak(target.getAttribute('data-word') || ''); return; }
-    if (action === 'flip') { flashFlipped = !flashFlipped; render(); return; }
+    if (action === 'flip') {
+      flashFlipped = !flashFlipped;
+      render();
+      if (flashFlipped) {
+        var day = currentDay();
+        var word = day.words[flashIndex];
+        if (word) renderDiscoveryOverlay(word);
+      }
+      return;
+    }
     if (action === 'prevCard') { moveCard(-1); return; }
     if (action === 'nextCard') { moveCard(1); return; }
     if (action === 'clearFlash') { clearMode('flashcard'); return; }
@@ -835,6 +848,110 @@
     } catch (e) {
       console.warn('speech synthesis failed', e);
     }
+  }
+
+
+  /* =========================
+     Concept Discovery UX
+  ========================= */
+
+  function getConceptLinks(word) {
+    var graph = {
+      perception: ['cognition', 'interpretation', 'representation'],
+      representation: ['abstraction', 'language', 'symbol'],
+      language: ['meaning', 'symbol', 'communication'],
+      bias: ['interpretation', 'perspective', 'assumption'],
+      abstraction: ['concept', 'model', 'framework'],
+      metaphor: ['representation', 'image', 'domain'],
+      rhetoric: ['persuasion', 'tone', 'implication'],
+      network: ['media', 'information', 'platform'],
+      context: ['meaning', 'interpretation', 'discourse']
+    };
+    return graph[String(word || '').toLowerCase()] || [];
+  }
+
+  function randomArchiveMessage() {
+    var items = [
+      'Narrative Trench illuminated',
+      'Cognition Abyss discovered',
+      'Semantic Reef connected',
+      'Interpretation Current awakened',
+      'Symbolic Depths mapped'
+    ];
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function renderDiscoveryOverlay(word) {
+    var existing = document.querySelector('.discovery-overlay');
+    if (existing) existing.remove();
+
+    var links = getConceptLinks(word.word);
+    if (!links.length) return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'discovery-overlay';
+
+    overlay.innerHTML =
+      '<div class="overlay-glow"></div>' +
+      '<div class="overlay-content">' +
+      '<div class="overlay-title">New Connection Found</div>' +
+      '<div class="overlay-main">' + h(word.word) + ' ↔ ' + h(links[0]) + '</div>' +
+      '<div class="overlay-sub">' + h(randomArchiveMessage()) + '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    setTimeout(function () {
+      overlay.classList.add('show');
+    }, 30);
+
+    setTimeout(function () {
+      overlay.classList.remove('show');
+      setTimeout(function () {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }, 700);
+    }, 2600);
+  }
+
+  function connectedConceptsHtml(word) {
+    if (!word) return '';
+    var links = getConceptLinks(word.word);
+    if (!links.length) return '';
+
+    return '<section class="concept-panel">' +
+      '<div class="concept-title">Connected Concepts</div>' +
+      '<div class="concept-links">' +
+      '<span class="concept-core">' + h(word.word) + '</span>' +
+      links.map(function (l) {
+        return '<span class="concept-node">↔ ' + h(l) + '</span>';
+      }).join('') +
+      '</div></section>';
+  }
+
+  function knowledgeGraphHtml(word) {
+    if (!word) return '';
+
+    var graphs = {
+      perception: ['perception', 'cognition', 'representation'],
+      representation: ['representation', 'abstraction', 'language'],
+      language: ['language', 'symbol', 'communication'],
+      metaphor: ['metaphor', 'representation', 'meaning'],
+      bias: ['bias', 'perspective', 'interpretation']
+    };
+
+    var path = graphs[String(word.word || '').toLowerCase()];
+    if (!path) return '';
+
+    return '<section class="knowledge-graph">' +
+      '<div class="concept-title">Knowledge Graph</div>' +
+      '<div class="graph-column">' +
+      path.map(function (p, i) {
+        return '<div class="graph-node">' +
+          h(p) +
+          (i < path.length - 1 ? '<div class="graph-arrow">↓</div>' : '') +
+          '</div>';
+      }).join('') +
+      '</div></section>';
   }
 
   function renderErrorNotice(message) {
