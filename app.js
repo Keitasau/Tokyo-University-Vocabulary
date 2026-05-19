@@ -356,6 +356,51 @@
       '</button>';
   }
 
+
+  function seaMapHtml(activeDay) {
+    var unitId = activeDay && activeDay.unitId ? activeDay.unitId : 'unit1';
+    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
+    if (!unitDays.length) return '';
+    var sea = activeDay && activeDay.seaTitle ? activeDay.seaTitle : 'Learning Sea';
+    var progress = unitProgressPercent(activeDay);
+    var explored = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
+    return '<section class="card sea-map-card"><div class="sea-map-head"><div><div class="eyebrow">Sea Map</div><h2>' + h(sea) + ' Exploration Map</h2><p>Dayを単なる一覧ではなく、海域ノードとして進みます。CLEAR済・現在地・LOCKが一目で分かります。</p></div><div class="map-percent"><strong>' + h(progress) + '%</strong><span>explored</span></div></div>' +
+      '<div class="sea-map-route" aria-label="' + h(sea) + ' exploration route">' + unitDays.map(function (d) { return seaMapNodeHtml(d); }).join('') + '</div>' +
+      '<div class="sea-map-legend"><span><i class="legend-dot clear"></i>CLEAR</span><span><i class="legend-dot current"></i>CURRENT</span><span><i class="legend-dot open"></i>OPEN</span><span><i class="legend-dot locked"></i>LOCK</span></div>' +
+      '<div class="map-story">' + h(seaMapStory(sea, explored, unitDays.length)) + '</div></section>';
+  }
+
+  function seaMapNodeHtml(day) {
+    var index = data.days.indexOf(day);
+    var unlocked = !!state.unlocked[day.id];
+    var completed = !!state.completed[day.id];
+    var current = day.id === currentDay().id;
+    var status = completed ? 'CLEAR' : (current ? 'CURRENT' : (unlocked ? 'OPEN' : 'LOCK'));
+    var cls = completed ? 'clear' : (current ? 'current' : (unlocked ? 'open' : 'locked'));
+    var area = seaAreaName(day);
+    var icon = seaMapIcon(day, cls);
+    return '<button class="map-node ' + h(cls) + '" data-action="selectDay" data-index="' + h(index) + '" ' + (unlocked ? '' : 'disabled') + '>' +
+      '<span class="node-connector" aria-hidden="true"></span>' +
+      '<span class="node-icon">' + h(icon) + '</span>' +
+      '<span class="node-main"><strong>Day ' + h(day.unitDay || day.day) + '</strong><small>' + h(area) + '</small></span>' +
+      '<span class="node-status">' + h(status) + '</span>' +
+      '</button>';
+  }
+
+  function seaMapIcon(day, statusClass) {
+    if (statusClass === 'locked') return '🔒';
+    if (statusClass === 'clear') return '✅';
+    var n = day && day.unitDay ? Number(day.unitDay) : 1;
+    var icons = ['🪸', '🌊', '🐚', '🕳️', '🐟', '🪨', '🌌'];
+    return icons[(n - 1) % icons.length];
+  }
+
+  function seaMapStory(sea, explored, total) {
+    if (explored <= 0) return sea + 'の入口に到着しました。まずは最初のリーフから探索を始めます。';
+    if (explored >= total) return sea + 'の全海域を踏破しました。次の知的海域へ進む準備ができています。';
+    return sea + 'を' + explored + ' / ' + total + '地点まで探索中です。次のノードを開くには、現在地の3モードをCLEARしてください。';
+  }
+
   function seaProgressHtml(progress, day) {
     var unitProgress = unitProgressPercent(day);
     var filled = Math.max(0, Math.min(10, Math.round(unitProgress / 10)));
@@ -383,7 +428,7 @@
     var status = completed ? 'CLEAR：この海域の探索は完了しました。次の海へ進めます。' : 'Flashcard / Quiz / Listening をすべてCLEARすると次の海域が解放されます。';
     var area = seaAreaName(day);
     var celebration = lastClearEvent && lastClearEvent.dayId === day.id ? dayClearEventHtml(lastClearEvent) : '';
-    return '' + celebration + seaSelectionHtml() +
+    return '' + celebration + seaSelectionHtml() + seaMapHtml(day) +
       '<section class="card home-card"><div class="eyebrow">Unit ' + h(day.unitNumber || 1) + ' Day ' + h(day.unitDay || day.day) + ' / 7 ・ Voyage Day ' + h(day.day) + ' ・ ' + h(day.words.length) + ' words</div>' +
       '<h2>今日の海域：' + h(area) + '</h2><p>' + h(status) + '</p>' +
       '<div class="status-line"><span>Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(day.seaTitle || 'Learning Sea') + ' ' + h(unitProgressPercent(day)) + '% explored</span></div>' +
