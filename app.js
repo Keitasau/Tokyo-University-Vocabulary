@@ -480,6 +480,7 @@
       '</button>' +
       connectedConceptsHtml(word) +
       knowledgeGraphHtml(word) +
+      conceptNavigationHtml(word) +
       '<div class="button-row"><button data-action="prevCard" ' + (safeIndex === 0 ? 'disabled' : '') + '>前へ</button><button data-action="speak" data-word="' + h(word.word) + '">音声</button>' +
       (safeIndex < day.words.length - 1 ? '<button data-action="nextCard">次へ</button>' : '<button class="primary" data-action="clearFlash">Flashcard CLEAR</button>') + '</div>' +
       (clear ? '<p class="done-note">Flashcard CLEAR済みです。</p>' : '') + '</section>';
@@ -534,6 +535,7 @@
     if (action === 'answer') { answerQuiz(Number(target.getAttribute('data-choice')), false); return; }
     if (action === 'nextQuestion') { nextQuestion(); return; }
     if (action === 'speak') { speak(target.getAttribute('data-word') || ''); return; }
+    if (action === 'navigateConcept') { navigateToConcept(target.getAttribute('data-concept') || ''); return; }
     if (action === 'flip') {
       flashFlipped = !flashFlipped;
       render();
@@ -856,18 +858,111 @@
   ========================= */
 
   function getConceptLinks(word) {
-    var graph = {
-      perception: ['cognition', 'interpretation', 'representation'],
-      representation: ['abstraction', 'language', 'symbol'],
-      language: ['meaning', 'symbol', 'communication'],
-      bias: ['interpretation', 'perspective', 'assumption'],
-      abstraction: ['concept', 'model', 'framework'],
-      metaphor: ['representation', 'image', 'domain'],
-      rhetoric: ['persuasion', 'tone', 'implication'],
-      network: ['media', 'information', 'platform'],
-      context: ['meaning', 'interpretation', 'discourse']
+    var graph = conceptGraph();
+    return graph[String(word || '').toLowerCase()] || inferConceptLinks(word);
+  }
+
+  function conceptGraph() {
+    return {
+      perception: ['interpretation', 'cognition', 'representation'],
+      represent: ['representation', 'symbol', 'language'],
+      representation: ['abstraction', 'language', 'metaphor'],
+      interpret: ['interpretation', 'context', 'meaning'],
+      interpretation: ['evidence', 'perspective', 'reflection'],
+      assumption: ['bias', 'framework', 'perspective'],
+      framework: ['model', 'structure', 'system'],
+      evidence: ['infer', 'claim', 'evaluate'],
+      infer: ['evidence', 'indicate', 'interpretation'],
+      indicate: ['sign', 'signal', 'evidence'],
+      distinguish: ['distinction', 'category', 'classification'],
+      context: ['meaning', 'discourse', 'interpretation'],
+      concept: ['abstraction', 'category', 'model'],
+      category: ['classification', 'distinction', 'concept'],
+      structure: ['framework', 'system', 'relation'],
+      model: ['framework', 'abstraction', 'mechanism'],
+      abstract: ['abstraction', 'concept', 'concrete'],
+      bias: ['assumption', 'perspective', 'prejudice'],
+      stereotype: ['bias', 'category', 'representation'],
+      prejudice: ['bias', 'assumption', 'perspective'],
+      perspective: ['viewpoint', 'interpretation', 'bias'],
+      expectation: ['assumption', 'perception', 'tendency'],
+      tendency: ['pattern', 'bias', 'generalize'],
+      abstraction: ['concept', 'model', 'classification'],
+      classification: ['category', 'distinction', 'system'],
+      classify: ['classification', 'category', 'feature'],
+      generalize: ['abstraction', 'category', 'assumption'],
+      distinction: ['distinguish', 'category', 'contrast'],
+      feature: ['category', 'model', 'evidence'],
+      system: ['structure', 'component', 'relation'],
+      mechanism: ['system', 'structure', 'explanation'],
+      component: ['system', 'structure', 'relation'],
+      relation: ['network', 'meaning', 'structure'],
+      metacognition: ['reflection', 'awareness', 'monitor'],
+      reflection: ['metacognition', 'revision', 'insight'],
+      awareness: ['bias', 'metacognition', 'monitor'],
+      monitor: ['awareness', 'evaluate', 'metacognition'],
+      evaluate: ['evidence', 'claim', 'judgment'],
+      insight: ['interpretation', 'reflection', 'revision'],
+      revision: ['reflection', 'evaluate', 'interpretation'],
+      language: ['symbol', 'meaning', 'communication'],
+      symbol: ['sign', 'code', 'representation'],
+      sign: ['symbol', 'signal', 'reference'],
+      signal: ['sign', 'communication', 'message'],
+      code: ['symbol', 'system', 'meaning'],
+      refer: ['reference', 'meaning', 'sign'],
+      reference: ['refer', 'context', 'meaning'],
+      communication: ['sender', 'receiver', 'interaction'],
+      expression: ['message', 'tone', 'communication'],
+      message: ['sender', 'receiver', 'tone'],
+      sender: ['message', 'audience', 'communication'],
+      receiver: ['message', 'interpretation', 'communication'],
+      interaction: ['communication', 'discourse', 'relation'],
+      interpretive: ['interpretation', 'reading', 'context'],
+      narrative: ['sequence', 'viewpoint', 'discourse'],
+      discourse: ['context', 'narrative', 'media'],
+      utterance: ['context', 'expression', 'meaning'],
+      contextual: ['context', 'meaning', 'discourse'],
+      sequence: ['narrative', 'coherence', 'structure'],
+      coherence: ['sequence', 'structure', 'meaning'],
+      viewpoint: ['perspective', 'narrative', 'interpretation'],
+      rhetoric: ['persuasion', 'claim', 'tone'],
+      persuasion: ['claim', 'appeal', 'evidence'],
+      implication: ['meaning', 'claim', 'context'],
+      claim: ['evidence', 'persuasion', 'evaluate'],
+      appeal: ['persuasion', 'audience', 'tone'],
+      emphasis: ['tone', 'message', 'rhetoric'],
+      tone: ['expression', 'attitude', 'rhetoric'],
+      translation: ['meaning', 'equivalent', 'nuance'],
+      meaning: ['language', 'context', 'interpretation'],
+      ambiguity: ['meaning', 'context', 'interpretation'],
+      equivalent: ['translation', 'meaning', 'nuance'],
+      nuance: ['connotation', 'tone', 'translation'],
+      literal: ['meaning', 'translation', 'connotation'],
+      connotation: ['nuance', 'implication', 'meaning'],
+      metaphor: ['representation', 'analogy', 'domain'],
+      abstractive: ['abstraction', 'language', 'representation'],
+      image: ['representation', 'metaphor', 'concrete'],
+      analogy: ['metaphor', 'relation', 'model'],
+      domain: ['metaphor', 'concept', 'framework'],
+      concrete: ['abstract', 'example', 'image'],
+      media: ['information', 'platform', 'network'],
+      information: ['media', 'knowledge', 'interpretation'],
+      transmit: ['communication', 'network', 'message'],
+      circulate: ['network', 'media', 'information'],
+      audience: ['receiver', 'rhetoric', 'media'],
+      platform: ['media', 'network', 'discourse'],
+      network: ['relation', 'media', 'system'],
+      literacy: ['media', 'interpretation', 'evaluate']
     };
-    return graph[String(word || '').toLowerCase()] || [];
+  }
+
+  function inferConceptLinks(word) {
+    var text = String(word || '').toLowerCase();
+    if (!text) return [];
+    if (text.indexOf('tion') >= 0) return ['concept', 'relation', 'framework'];
+    if (text.indexOf('meta') === 0) return ['reflection', 'awareness', 'cognition'];
+    if (text.indexOf('trans') === 0) return ['movement', 'communication', 'transition'];
+    return [];
   }
 
   function randomArchiveMessage() {
@@ -952,6 +1047,130 @@
           '</div>';
       }).join('') +
       '</div></section>';
+  }
+
+  function conceptNavigationHtml(word) {
+    if (!word) return '';
+    var links = getConceptLinks(word.word).slice(0, 3);
+    var nextWord = nextConceptWord(word.word);
+    var currentPath = conceptPathForWord(word.word);
+    var currentQuestion = reflectionQuestionForWord(word.word);
+    if (!links.length && !nextWord) return '';
+
+    return '<section class="concept-navigation" aria-label="Concept Navigation">' +
+      '<div class="nav-current"><div><div class="eyebrow">Concept Navigation</div><h3>Knowledge Currents</h3><p>' + h(flowSentence(word.word, links)) + '</p></div><span class="current-orb">' + h(word.word) + '</span></div>' +
+      '<div class="concept-paths">' + conceptPathHtml(currentPath) + '</div>' +
+      '<div class="dive-deeper"><div class="concept-title">Dive Deeper</div><div class="dive-list">' +
+      links.map(function (link) { return conceptDiveButtonHtml(link); }).join('') +
+      (nextWord ? conceptDiveButtonHtml(nextWord.word, 'Next in this sea') : '') +
+      '</div></div>' +
+      '<div class="reflection-layer"><span>Reflection</span><p>' + h(currentQuestion) + '</p></div>' +
+      '</section>';
+  }
+
+  function conceptDiveButtonHtml(concept, label) {
+    var target = findWordLocation(concept);
+    var cls = target ? 'reachable' : 'ghost-current';
+    var note = label || (target ? 'Open concept' : 'Related current');
+    return '<button class="dive-chip ' + h(cls) + '" data-action="navigateConcept" data-concept="' + h(concept) + '" ' + (target ? '' : 'aria-disabled="true"') + '><small>' + h(note) + '</small><strong>→ ' + h(concept) + '</strong></button>';
+  }
+
+  function conceptPathHtml(path) {
+    var labels = ['Perception Path', 'Language Path', 'Identity Path'];
+    return labels.map(function (label) {
+      return '<span class="path-pill ' + (label === path ? 'active' : '') + '">' + h(label) + '</span>';
+    }).join('');
+  }
+
+  function conceptPathForWord(word) {
+    var day = currentDay();
+    var key = String(word || '').toLowerCase();
+    if (day && day.unitId === 'unit2') return 'Language Path';
+    if (['bias', 'prejudice', 'stereotype', 'perspective', 'viewpoint', 'audience', 'discourse'].indexOf(key) >= 0) return 'Identity Path';
+    return 'Perception Path';
+  }
+
+  function reflectionQuestionForWord(word) {
+    var key = String(word || '').toLowerCase();
+    var questions = {
+      perception: 'Do we see reality itself, or do we interpret signs through memory and language?',
+      language: 'How does language shape what we are able to notice?',
+      bias: 'What hidden assumption might change the way evidence is selected?',
+      framework: 'What becomes visible only after we change the framework?',
+      context: 'How does context change the meaning of the same word?',
+      metaphor: 'What abstract idea becomes visible through this metaphor?',
+      rhetoric: 'How does this wording guide the reader’s judgment?',
+      media: 'How does the medium change the movement of information?',
+      translation: 'What is gained or lost when meaning crosses languages?',
+      representation: 'What is present in the representation, and what is left outside it?'
+    };
+    return questions[key] || 'How does this concept connect to the way we read, judge, and understand the world?';
+  }
+
+  function flowSentence(word, links) {
+    if (!links || !links.length) return 'This concept is drifting toward the next abstract domain.';
+    return word + ' flows toward ' + links.slice(0, 2).join(' and ') + ', forming a route through the deep conceptual sea.';
+  }
+
+  function nextConceptWord(currentWord) {
+    var day = currentDay();
+    if (!day || !Array.isArray(day.words) || !day.words.length) return null;
+    var key = String(currentWord || '').toLowerCase();
+    for (var i = 0; i < day.words.length; i++) {
+      if (String(day.words[i].word || '').toLowerCase() === key) return day.words[(i + 1) % day.words.length];
+    }
+    return day.words[0];
+  }
+
+  function findWordLocation(concept) {
+    var key = String(concept || '').toLowerCase();
+    if (!key) return null;
+    var exact = null;
+    var related = null;
+    data.days.forEach(function (day, dayIndex) {
+      day.words.forEach(function (word, wordIndex) {
+        var w = String(word.word || '').toLowerCase();
+        if (w === key && !exact) exact = { dayIndex: dayIndex, wordIndex: wordIndex, word: word };
+        if (!related && (w.indexOf(key) >= 0 || key.indexOf(w) >= 0)) related = { dayIndex: dayIndex, wordIndex: wordIndex, word: word };
+      });
+    });
+    return exact || related;
+  }
+
+  function navigateToConcept(concept) {
+    var target = findWordLocation(concept);
+    if (!target) {
+      renderNavigationPulse(concept);
+      return;
+    }
+    var day = data.days[target.dayIndex];
+    if (!day || !state.unlocked[day.id]) {
+      renderNavigationPulse(concept + ' is in a deeper locked current');
+      return;
+    }
+    currentDayIndex = target.dayIndex;
+    currentMode = 'flashcard';
+    flashIndex = target.wordIndex;
+    flashFlipped = false;
+    stopQuizTimer();
+    quiz = null;
+    lastClearEvent = null;
+    render();
+    renderNavigationPulse('Diving to ' + target.word.word);
+  }
+
+  function renderNavigationPulse(message) {
+    var existing = document.querySelector('.navigation-pulse');
+    if (existing) existing.remove();
+    var pulse = document.createElement('div');
+    pulse.className = 'navigation-pulse';
+    pulse.innerHTML = '<span>↯</span><strong>' + h(message) + '</strong>';
+    document.body.appendChild(pulse);
+    setTimeout(function () { pulse.classList.add('show'); }, 30);
+    setTimeout(function () {
+      pulse.classList.remove('show');
+      setTimeout(function () { if (pulse.parentNode) pulse.parentNode.removeChild(pulse); }, 500);
+    }, 1600);
   }
 
   function renderErrorNotice(message) {

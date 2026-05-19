@@ -565,3 +565,313 @@ p { line-height: 1.75; color: #d8eef7; }
   .map-node { grid-template-columns: 48px 1fr; }
   .node-status { grid-column: 2; }
 }
+
+
+/* =========================
+   Concept Discovery UX
+========================= */
+
+.semantic-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(126,231,255,0.24);
+  animation: drift 18s linear infinite;
+}
+
+.p1 { width: 6px; height: 6px; left: 12%; top: 90%; }
+.p2 { width: 10px; height: 10px; left: 28%; top: 100%; animation-duration: 24s; }
+.p3 { width: 8px; height: 8px; left: 62%; top: 95%; animation-duration: 19s; }
+.p4 { width: 14px; height: 14px; left: 82%; top: 102%; animation-duration: 28s; }
+.p5 { width: 5px; height: 5px; left: 48%; top: 97%; animation-duration: 22s; }
+
+@keyframes drift {
+  from { transform: translateY(0px); opacity: 0; }
+  15% { opacity: 1; }
+  to { transform: translateY(-120vh); opacity: 0; }
+}
+
+.discovery-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity .6s ease;
+  pointer-events: none;
+}
+
+.discovery-overlay.show { opacity: 1; }
+
+.overlay-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(126,231,255,0.28), transparent 70%);
+  filter: blur(12px);
+}
+
+.overlay-content {
+  position: relative;
+  padding: 26px;
+  border-radius: 28px;
+  background: rgba(3,22,36,0.90);
+  border: 1px solid rgba(126,231,255,0.35);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.overlay-title {
+  color: var(--accent);
+  font-size: .82rem;
+  letter-spacing: .18em;
+  font-weight: 900;
+}
+
+.overlay-main {
+  margin-top: 10px;
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  font-weight: 900;
+}
+
+.overlay-sub {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.concept-panel,
+.knowledge-graph {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(126,231,255,0.20);
+  background: rgba(255,255,255,0.06);
+}
+
+.concept-title {
+  color: var(--accent);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.concept-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.concept-core,
+.concept-node {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(126,231,255,0.12);
+  border: 1px solid rgba(126,231,255,0.20);
+}
+
+.concept-core {
+  font-weight: 900;
+}
+
+.graph-column {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.graph-arrow {
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+/* =========================
+   Concept Navigation UX
+========================= */
+.concept-navigation {
+  position: relative;
+  overflow: hidden;
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(126,231,255,0.24);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(126,231,255,0.18), transparent 35%),
+    radial-gradient(circle at 88% 88%, rgba(185,244,209,0.12), transparent 30%),
+    rgba(255,255,255,0.055);
+}
+.concept-navigation::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(126,231,255,0.18) 19% 20%, transparent 21% 100%),
+    linear-gradient(155deg, transparent 0 52%, rgba(185,244,209,0.14) 53% 54%, transparent 55% 100%);
+  animation: currentShift 8s ease-in-out infinite alternate;
+}
+.concept-navigation > * { position: relative; }
+.nav-current {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.nav-current h3 {
+  margin: 0 0 8px;
+  font-size: clamp(1.12rem, 4vw, 1.45rem);
+}
+.nav-current p { margin-bottom: 0; }
+.current-orb {
+  flex: 0 0 auto;
+  max-width: 42%;
+  padding: 13px 15px;
+  border-radius: 999px;
+  color: #012135;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  font-weight: 900;
+  box-shadow: 0 12px 28px rgba(126,231,255,0.20);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.concept-paths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.path-pill {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--muted);
+  background: rgba(255,255,255,0.06);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.path-pill.active {
+  color: var(--accent);
+  border-color: rgba(126,231,255,0.44);
+  background: rgba(126,231,255,0.13);
+}
+.dive-deeper { margin-top: 16px; }
+.dive-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.dive-chip {
+  min-height: 78px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  text-align: left;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(126,231,255,0.13), rgba(255,255,255,0.06));
+}
+.dive-chip.reachable {
+  border-color: rgba(126,231,255,0.38);
+}
+.dive-chip.ghost-current {
+  cursor: default;
+  opacity: 0.82;
+  border-style: dashed;
+}
+.dive-chip small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+}
+.dive-chip strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+.reflection-layer {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(185,244,209,0.24);
+  background: rgba(1,12,22,0.22);
+}
+.reflection-layer span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent2);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.reflection-layer p {
+  margin: 0;
+  font-style: italic;
+}
+.navigation-pulse {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + 28px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: min(92%, 520px);
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(126,231,255,0.38);
+  background: rgba(3,22,36,0.92);
+  color: var(--text);
+  box-shadow: 0 16px 44px rgba(0,0,0,0.32);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease, transform .35s ease;
+  backdrop-filter: blur(14px);
+}
+.navigation-pulse.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.navigation-pulse span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #012135;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  font-weight: 900;
+}
+.navigation-pulse strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes currentShift {
+  from { transform: translateX(-18px) translateY(0); }
+  to { transform: translateX(18px) translateY(-8px); }
+}
+
+@media (max-width: 620px) {
+  .nav-current {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .current-orb {
+    max-width: 100%;
+    width: max-content;
+  }
+  .dive-list {
+    grid-template-columns: 1fr;
+  }
+}
