@@ -10,12 +10,16 @@
 </head>
 <body>
 
-<!-- OCEAN BACKGROUND LAYERS -->
+<!-- ANIMATED BG LAYERS -->
 <div id="ocean-bg">
+  <div class="ocean-gradient" id="ocean-gradient"></div>
+  <div class="creatures-layer" id="creatures-layer"></div>
+  <div class="coral-layer" id="coral-layer"></div>
   <div class="wave wave1"></div>
   <div class="wave wave2"></div>
   <div class="wave wave3"></div>
   <div class="bubbles" id="bubbles"></div>
+  <div class="particles" id="particles"></div>
 </div>
 
 <!-- HEADER -->
@@ -33,7 +37,7 @@
   </div>
 </header>
 
-<!-- SCREENS -->
+<!-- HOME SCREEN -->
 <div id="screen-home" class="screen active">
   <div class="home-hero">
     <div class="shark-teacher" id="shark-home">
@@ -45,9 +49,7 @@
   </div>
 
   <div class="day-progress-strip">
-    <div id="day-scroll" class="day-scroll">
-      <!-- Days injected by JS -->
-    </div>
+    <div id="day-scroll" class="day-scroll"></div>
   </div>
 
   <div class="home-actions">
@@ -78,8 +80,32 @@
     <button class="back-btn" onclick="App.showScreen('screen-home')">← Back</button>
     <h2>Topics</h2>
   </div>
-  <div class="topic-grid" id="topic-grid">
-    <!-- injected by JS -->
+  <div class="topic-grid" id="topic-grid"></div>
+</div>
+
+<!-- TOPIC MODE MODAL -->
+<div id="topic-mode-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-topic-badge" id="modal-topic-name">Perception Sea</div>
+    <div class="modal-topic-creature" id="modal-creature">🧠</div>
+    <h3 class="modal-title">学習モードを選んでください</h3>
+    <button class="modal-btn mode-full" id="modal-full-btn">
+      <span class="modal-btn-icon">🌊</span>
+      <div class="modal-btn-content">
+        <div class="modal-btn-title">Full Mode</div>
+        <div class="modal-btn-sub">トピック全語を一気に学習</div>
+      </div>
+      <span class="modal-btn-count" id="modal-full-count">43語</span>
+    </button>
+    <button class="modal-btn mode-step" id="modal-step-btn">
+      <span class="modal-btn-icon">🐾</span>
+      <div class="modal-btn-content">
+        <div class="modal-btn-title">Small Step Mode</div>
+        <div class="modal-btn-sub">1回10語ずつコツコツと</div>
+      </div>
+      <span class="modal-btn-count" id="modal-step-count">10語</span>
+    </button>
+    <button class="modal-cancel" onclick="App.closeTopicModal()">キャンセル</button>
   </div>
 </div>
 
@@ -100,9 +126,7 @@
       <span class="r-label">ランダム総復習</span>
       <span class="r-count">254語から</span>
     </button>
-    <div id="topic-review-list" class="topic-review-list">
-      <!-- injected by JS -->
-    </div>
+    <div id="topic-review-list" class="topic-review-list"></div>
   </div>
 </div>
 
@@ -165,14 +189,19 @@
     </div>
   </div>
 
-  <div class="quiz-choices" id="quiz-choices">
-    <!-- injected by JS -->
-  </div>
+  <div class="quiz-choices" id="quiz-choices"></div>
 
   <div class="quiz-feedback" id="quiz-feedback" style="display:none">
-    <div class="feedback-icon" id="feedback-icon"></div>
-    <div class="feedback-msg" id="feedback-msg"></div>
+    <div class="feedback-header">
+      <div class="feedback-icon" id="feedback-icon"></div>
+      <div class="feedback-msg" id="feedback-msg"></div>
+    </div>
     <div class="feedback-correct" id="feedback-correct"></div>
+    <div class="feedback-hint" id="feedback-hint" style="display:none">
+      <div class="hint-etymology" id="hint-etymology"></div>
+      <div class="hint-derivatives" id="hint-derivatives"></div>
+      <div class="hint-example" id="hint-example"></div>
+    </div>
     <button class="feedback-next" onclick="App.nextQuiz()">次へ →</button>
   </div>
 </div>
@@ -193,7 +222,12 @@
   <div class="celebration" id="celebration"></div>
 </div>
 
-<!-- SHARK TEACHER OVERLAY -->
+<!-- CORRECT BURST OVERLAY -->
+<div id="correct-burst" class="correct-burst" style="display:none">
+  <div class="burst-content" id="burst-content"></div>
+</div>
+
+<!-- SHARK OVERLAY -->
 <div id="shark-overlay" class="shark-overlay" style="display:none">
   <div class="shark-msg-box">
     <span class="shark-big">🦈</span>

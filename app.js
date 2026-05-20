@@ -5,23 +5,78 @@
 // ============================================================
 const State = {
   vocab: [],
-  progress: {}, // word -> { seen, correct, wrong, mastered }
-  sessions: {}, // day -> { fc: bool, quiz: bool, listening: bool }
+  progress: {},
+  sessions: {},
   weakWords: new Set(),
   currentScreen: 'screen-home',
 };
 
-const STORAGE_KEY = 'avn_v1';
+const STORAGE_KEY = 'avn_v2';
 const TOTAL = 254;
+const SMALL_STEP_SIZE = 10;
 
+// Topic → creature/environment config
 const TOPIC_META = {
-  'Perception Sea':    { emoji: '🧠', color: '#29b6f6' },
-  'Language Reef':     { emoji: '🗣️', color: '#66bb6a' },
-  'Deep Digital Sea':  { emoji: '🤖', color: '#7e57c2' },
-  'Society Ocean':     { emoji: '🏛️', color: '#ef5350' },
-  'Evolution Abyss':   { emoji: '🧬', color: '#26c6da' },
-  'Mangrove Bay':      { emoji: '🌿', color: '#8d6e63' },
+  'Perception Sea':   {
+    emoji: '🧠', color: '#29b6f6',
+    creatures: ['🐬','🐠','🐡','🦈','🐙'],
+    corals: ['🪸','🌿','🐚','🌊'],
+    bgCreature: '🐬',
+    label: '認知・心理'
+  },
+  'Language Reef':    {
+    emoji: '🗣️', color: '#66bb6a',
+    creatures: ['🐟','🦑','🐠','🦀','🦞'],
+    corals: ['🪸','🌿','🌺','🌸'],
+    bgCreature: '🐠',
+    label: '言語・表現'
+  },
+  'Deep Digital Sea': {
+    emoji: '🤖', color: '#9c71e0',
+    creatures: ['🦈','🦑','🦭','🐙','🐳'],
+    corals: ['🪸','⭐','💠','🔷'],
+    bgCreature: '🦑',
+    label: 'デジタル・AI'
+  },
+  'Society Ocean':    {
+    emoji: '🏛️', color: '#ef5350',
+    creatures: ['🐋','🦭','🐧','🐻‍❄️','🦁'],
+    corals: ['🪸','🌺','🏔️','🌊'],
+    bgCreature: '🐋',
+    label: '社会・制度'
+  },
+  'Evolution Abyss':  {
+    emoji: '🧬', color: '#26c6da',
+    creatures: ['🦈','🐊','🐢','🦎','🦋'],
+    corals: ['🌿','🦠','🍄','🌱'],
+    bgCreature: '🦈',
+    label: '進化・生命'
+  },
+  'Mangrove Bay':     {
+    emoji: '🌿', color: '#a5d6a7',
+    creatures: ['🐧','🐻‍❄️','🦭','🦦','🦅'],
+    corals: ['🌿','🍃','🌳','🦜'],
+    bgCreature: '🐧',
+    label: '環境・自然'
+  },
 };
+
+// Memory tip templates for wrong answers
+function buildMemoryTip(w) {
+  const tips = [];
+  if (w.etymology) {
+    tips.push(`🔤 語源ヒント: ${w.etymology.split('；')[0]}`);
+  }
+  if (w.derivatives && w.derivatives.length) {
+    tips.push(`🔗 関連語: ${w.derivatives.slice(0,2).join('、')}`);
+  }
+  if (w.example) {
+    // Take first 60 chars of example as context
+    const ex = w.example.length > 70 ? w.example.slice(0,70)+'...' : w.example;
+    tips.push(`📖 例文: ${ex}`);
+  }
+  return tips;
+}
 
 const SHARK_CORRECT = [
   "Great Dive! 🦈", "Concept Found!", "Excellent!", "Ocean Brain Activated!",
@@ -37,18 +92,27 @@ const SHARK_HOME = [
   "Swim through the words today!", "Let's explore the deep!",
 ];
 
+// Correct burst emojis by topic
+const BURST_CORRECT = {
+  'Perception Sea':   ['🌊','✨','💫','⚡'],
+  'Language Reef':    ['🌺','✨','🌿','💚'],
+  'Deep Digital Sea': ['⚡','💜','🌟','🤖'],
+  'Society Ocean':    ['🏛️','⭐','✨','🔥'],
+  'Evolution Abyss':  ['🧬','✨','💎','🌀'],
+  'Mangrove Bay':     ['🌿','🍃','✨','💚'],
+};
+
 // ============================================================
 // PERSISTENCE
 // ============================================================
 function saveState() {
   try {
-    const data = {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
       progress: State.progress,
       sessions: State.sessions,
       weakWords: [...State.weakWords],
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch(e) { /* ignore */ }
+    }));
+  } catch(e) {}
 }
 
 function loadState() {
@@ -59,26 +123,28 @@ function loadState() {
     if (data.progress) State.progress = data.progress;
     if (data.sessions) State.sessions = data.sessions;
     if (data.weakWords) State.weakWords = new Set(data.weakWords);
-  } catch(e) { State.progress = {}; State.sessions = {}; State.weakWords = new Set(); }
+  } catch(e) {
+    State.progress = {}; State.sessions = {}; State.weakWords = new Set();
+  }
 }
 
 // ============================================================
-// APP INIT
+// APP
 // ============================================================
 const App = {
   sessionWords: [],
-  sessionMode: 'flashcard', // flashcard | quiz | listening
+  sessionMode: 'flashcard',
   sessionIndex: 0,
   sessionCorrect: 0,
-  sessionSource: 'day', // day | topic | weak | random
+  sessionSource: 'day',
   sessionTopic: null,
   sessionDay: null,
   quizTimer: null,
   quizTimerLeft: 10,
   quizCurrentWord: null,
-  quizChoices: [],
   quizAnswered: false,
   fcFlipped: false,
+  pendingTopicFull: null, // topic string for modal
 
   async init() {
     loadState();
@@ -90,6 +156,8 @@ const App = {
       State.vocab = [];
     }
     this.spawnBubbles();
+    this.spawnParticles();
+    this.updateBackground(null);
     this.updateHeader();
     this.renderHome();
     this.renderTopics();
@@ -105,22 +173,93 @@ const App = {
     window.scrollTo(0,0);
   },
 
-  // ---- BUBBLES ----
+  // ---- BACKGROUND CREATURES ----
+  updateBackground(topic) {
+    const meta = topic ? TOPIC_META[topic] : null;
+
+    // Gradient
+    document.body.setAttribute('data-topic', topic || '');
+
+    // Creatures
+    const layer = document.getElementById('creatures-layer');
+    if (layer) {
+      layer.innerHTML = '';
+      const creatures = meta ? meta.creatures : ['🐠','🐟','🐡','🦑','🐙'];
+      const count = 5 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const c = document.createElement('div');
+        c.className = 'creature' + (i === 0 ? ' large' : i > 3 ? ' small' : '');
+        const emoji = creatures[i % creatures.length];
+        c.textContent = emoji;
+        const top = 8 + Math.random() * 75;
+        const dur = 18 + Math.random() * 25;
+        const delay = -Math.random() * dur;
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        c.style.cssText = `
+          top:${top}%;
+          animation-duration:${dur}s;
+          animation-delay:${delay}s;
+          ${dir < 0 ? 'animation-direction:reverse;' : ''}
+        `;
+        layer.appendChild(c);
+      }
+    }
+
+    // Corals
+    const coral = document.getElementById('coral-layer');
+    if (coral) {
+      coral.innerHTML = '';
+      const corals = meta ? meta.corals : ['🪸','🌿','🐚','🌊'];
+      const positions = [5,15,25,40,55,68,78,88,95];
+      positions.forEach((pos, i) => {
+        const c = document.createElement('div');
+        c.className = 'coral';
+        c.textContent = corals[i % corals.length];
+        const size = 24 + Math.random() * 20;
+        const dur = 3 + Math.random() * 3;
+        const delay = -Math.random() * dur;
+        c.style.cssText = `
+          left:${pos}%;
+          font-size:${size}px;
+          animation-duration:${dur}s;
+          animation-delay:${delay}s;
+        `;
+        coral.appendChild(c);
+      });
+    }
+  },
+
   spawnBubbles() {
     const container = document.getElementById('bubbles');
     if (!container) return;
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 20; i++) {
       const b = document.createElement('div');
       b.className = 'bubble';
-      const size = 8 + Math.random() * 20;
+      const size = 6 + Math.random() * 18;
       b.style.cssText = `
         width:${size}px; height:${size}px;
         left:${Math.random()*100}%;
         bottom:-${size}px;
-        animation-duration:${8+Math.random()*12}s;
-        animation-delay:-${Math.random()*20}s;
+        animation-duration:${10+Math.random()*15}s;
+        animation-delay:-${Math.random()*25}s;
       `;
       container.appendChild(b);
+    }
+  },
+
+  spawnParticles() {
+    const container = document.getElementById('particles');
+    if (!container) return;
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = `
+        left:${Math.random()*100}%;
+        animation-duration:${20+Math.random()*30}s;
+        animation-delay:-${Math.random()*30}s;
+        opacity:${0.2+Math.random()*0.4};
+      `;
+      container.appendChild(p);
     }
   },
 
@@ -130,22 +269,16 @@ const App = {
     const mastered = Object.values(State.progress).filter(p => p.mastered).length;
     const weak = State.weakWords.size;
     const exploredPct = Math.round(seen / TOTAL * 100);
-
-    const elExp = document.getElementById('stat-explored');
-    const elMas = document.getElementById('stat-mastered');
-    const elWk = document.getElementById('stat-weak');
-    if (elExp) elExp.textContent = exploredPct + '%';
-    if (elMas) elMas.textContent = mastered + '/' + TOTAL;
-    if (elWk) elWk.textContent = '⚑' + weak;
+    this.setText('stat-explored', exploredPct + '%');
+    this.setText('stat-mastered', mastered + '/' + TOTAL);
+    this.setText('stat-weak', '⚑' + weak);
   },
 
   // ---- HOME ----
   renderHome() {
-    // Shark greeting
     const greet = document.getElementById('shark-greeting');
     if (greet) greet.textContent = SHARK_HOME[Math.floor(Math.random() * SHARK_HOME.length)];
 
-    // Days
     const dayScroll = document.getElementById('day-scroll');
     if (!dayScroll) return;
     dayScroll.innerHTML = '';
@@ -156,17 +289,14 @@ const App = {
       if (d === todayDay) pill.classList.add('today');
       else if (this.isDayClear(d)) pill.classList.add('clear');
       else if (this.isDayPartial(d)) pill.classList.add('partial');
-
       const status = d === todayDay ? '📍' : this.isDayClear(d) ? '✅' : '○';
       pill.innerHTML = `<span class="day-num">Day ${d}</span><span class="day-status">${status}</span>`;
       pill.onclick = () => this.startDaySession(d);
       dayScroll.appendChild(pill);
     }
-    // Scroll to today
     const todayEl = dayScroll.children[todayDay - 1];
     if (todayEl) setTimeout(() => todayEl.scrollIntoView({behavior:'smooth', inline:'center'}), 300);
 
-    // Progress bar
     const mastered = Object.values(State.progress).filter(p => p.mastered).length;
     const pct = Math.round(mastered / TOTAL * 100);
     const bar = document.getElementById('total-progress-bar');
@@ -176,29 +306,19 @@ const App = {
   },
 
   getTodayDay() {
-    // Calculate based on first usage or just use 1 for demo
     try {
       let firstDate = localStorage.getItem('avn_start');
       if (!firstDate) {
         firstDate = new Date().toDateString();
         localStorage.setItem('avn_start', firstDate);
       }
-      const start = new Date(firstDate);
-      const now = new Date();
-      const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+      const diff = Math.floor((new Date() - new Date(firstDate)) / 86400000);
       return Math.min(30, Math.max(1, diff + 1));
     } catch(e) { return 1; }
   },
 
-  isDayClear(day) {
-    const s = State.sessions[day];
-    return s && s.listening;
-  },
-
-  isDayPartial(day) {
-    const s = State.sessions[day];
-    return s && (s.fc || s.quiz);
-  },
+  isDayClear(day) { const s = State.sessions[day]; return s && s.listening; },
+  isDayPartial(day) { const s = State.sessions[day]; return s && (s.fc || s.quiz); },
 
   // ---- TOPICS ----
   renderTopics() {
@@ -213,38 +333,64 @@ const App = {
       const meta = TOPIC_META[topic] || { emoji: '🌊', color: '#29b6f6' };
       const card = document.createElement('div');
       card.className = 'topic-card';
+      card.style.setProperty('--card-accent', meta.color + '33');
       card.innerHTML = `
-        <div class="topic-emoji">${meta.emoji}</div>
+        <div class="topic-emoji">${meta.bgCreature || meta.emoji}</div>
         <div class="topic-name">${topic}</div>
-        <div class="topic-name-jp">${words[0]?.topicJp || ''}</div>
-        <div class="topic-count">${words.length}語</div>
+        <div class="topic-name-jp">${meta.label || (words[0]?.topicJp || '')}</div>
+        <div class="topic-count">${words.length}語 / 達成${pct}%</div>
         <div class="topic-mini-bar"><div class="topic-mini-fill" style="width:${pct}%;background:${meta.color}"></div></div>
       `;
-      card.onclick = () => this.startTopicSession(topic);
+      card.onclick = () => this.openTopicModal(topic);
       grid.appendChild(card);
     });
+  },
+
+  // ---- TOPIC MODE MODAL ----
+  openTopicModal(topic) {
+    this.pendingTopicFull = topic;
+    const meta = TOPIC_META[topic] || { emoji: '🌊', bgCreature: '🌊' };
+    const words = State.vocab.filter(v => v.topic === topic);
+
+    this.setText('modal-topic-name', topic);
+    const creatureEl = document.getElementById('modal-creature');
+    if (creatureEl) creatureEl.textContent = meta.bgCreature || meta.emoji;
+    this.setText('modal-full-count', words.length + '語');
+    this.setText('modal-step-count', SMALL_STEP_SIZE + '語');
+
+    const btn1 = document.getElementById('modal-full-btn');
+    const btn2 = document.getElementById('modal-step-btn');
+    if (btn1) btn1.onclick = () => { this.closeTopicModal(); this.startTopicSession(topic, 'full'); };
+    if (btn2) btn2.onclick = () => { this.closeTopicModal(); this.startTopicSession(topic, 'step'); };
+
+    const modal = document.getElementById('topic-mode-modal');
+    if (modal) modal.style.display = 'flex';
+  },
+
+  closeTopicModal() {
+    const modal = document.getElementById('topic-mode-modal');
+    if (modal) modal.style.display = 'none';
   },
 
   // ---- REVIEW ----
   renderReview() {
     const weakCount = document.getElementById('weak-count');
     if (weakCount) weakCount.textContent = State.weakWords.size + '語';
-
     const list = document.getElementById('topic-review-list');
     if (!list) return;
     list.innerHTML = '';
     const topics = [...new Set(State.vocab.map(v => v.topic))];
     topics.forEach(topic => {
       const words = State.vocab.filter(v => v.topic === topic);
-      const meta = TOPIC_META[topic] || { emoji: '🌊', color: '#29b6f6' };
+      const meta = TOPIC_META[topic] || { emoji: '🌊' };
       const btn = document.createElement('button');
       btn.className = 'review-btn';
       btn.innerHTML = `
-        <span class="r-icon">${meta.emoji}</span>
+        <span class="r-icon">${meta.bgCreature || meta.emoji}</span>
         <span class="r-label">${topic}</span>
         <span class="r-count">${words.length}語</span>
       `;
-      btn.onclick = () => { this.startTopicSession(topic); };
+      btn.onclick = () => this.openTopicModal(topic);
       list.appendChild(btn);
     });
   },
@@ -261,15 +407,31 @@ const App = {
     this.sessionSource = 'day';
     this.sessionDay = day;
     this.sessionWords = this.shuffleArr([...words]);
+    this.sessionTopic = words[0]?.topic || null;
+    this.updateBackground(this.sessionTopic);
     this.startPhase('flashcard');
   },
 
-  startTopicSession(topic) {
-    document.body.setAttribute('data-topic', topic);
-    const words = State.vocab.filter(v => v.topic === topic);
-    this.sessionSource = 'topic';
+  startTopicSession(topic, mode) {
+    // mode: 'full' | 'step'
+    const allWords = State.vocab.filter(v => v.topic === topic);
+    let words;
+
+    if (mode === 'step') {
+      // Find unseen words first, then seen-but-not-mastered, then mastered
+      const unseen = allWords.filter(w => !State.progress[w.word]?.seen);
+      const seen = allWords.filter(w => State.progress[w.word]?.seen && !State.progress[w.word]?.mastered);
+      const mastered = allWords.filter(w => State.progress[w.word]?.mastered);
+      const pool = [...this.shuffleArr(unseen), ...this.shuffleArr(seen), ...this.shuffleArr(mastered)];
+      words = pool.slice(0, SMALL_STEP_SIZE);
+    } else {
+      words = this.shuffleArr([...allWords]);
+    }
+
+    this.sessionSource = mode === 'step' ? 'topic-step' : 'topic';
     this.sessionTopic = topic;
-    this.sessionWords = this.shuffleArr([...words]);
+    this.sessionWords = words;
+    this.updateBackground(topic);
     this.startPhase('flashcard');
     this.showScreen('screen-flashcard');
   },
@@ -284,6 +446,7 @@ const App = {
     }
     this.sessionSource = mode;
     this.sessionWords = this.shuffleArr(words);
+    this.updateBackground(null);
     this.startPhase('quiz');
   },
 
@@ -316,14 +479,10 @@ const App = {
     const w = this.sessionWords[this.sessionIndex];
     if (!w) { this.advancePhase(); return; }
 
-    // Mark as seen
     if (!State.progress[w.word]) State.progress[w.word] = { seen: false, correct: 0, wrong: 0, mastered: false };
     State.progress[w.word].seen = true;
     saveState();
     this.updateHeader();
-
-    // Topic bg
-    document.body.setAttribute('data-topic', w.topic);
 
     const fc = document.getElementById('flashcard');
     if (fc) fc.classList.remove('flipped');
@@ -335,9 +494,7 @@ const App = {
     this.setText('card-example', '📖 ' + w.example);
     this.setText('card-translation', '　' + w.translation);
     this.setText('card-etymology', w.etymology ? '🔤 ' + w.etymology : '');
-    const deriv = w.derivatives && w.derivatives.length
-      ? '🔗 ' + w.derivatives.join('  /  ')
-      : '';
+    const deriv = w.derivatives && w.derivatives.length ? '🔗 ' + w.derivatives.join('  /  ') : '';
     this.setText('card-derivatives', deriv);
     this.setText('fc-progress', `${this.sessionIndex + 1} / ${this.sessionWords.length}`);
     this.setText('fc-topic-label', w.topic);
@@ -382,24 +539,32 @@ const App = {
   // ---- PHASE ADVANCEMENT ----
   advancePhase() {
     if (this.sessionMode === 'flashcard') {
-      // Mark FC done
       if (this.sessionDay && this.sessionSource === 'day') {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].fc = true;
         saveState();
       }
-      this.sessionIndex = 0;
-      this.startPhase('quiz');
+      // topic-step / topic: skip listening, go quiz → results
+      if (this.sessionSource === 'topic-step' || this.sessionSource === 'topic') {
+        this.sessionIndex = 0;
+        this.startPhase('quiz');
+      } else {
+        this.sessionIndex = 0;
+        this.startPhase('quiz');
+      }
     } else if (this.sessionMode === 'quiz') {
       if (this.sessionDay && this.sessionSource === 'day') {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].quiz = true;
         saveState();
       }
-      this.sessionIndex = 0;
-      this.startPhase('listening');
+      if (this.sessionSource === 'topic-step' || this.sessionSource === 'topic') {
+        this.showResults();
+      } else {
+        this.sessionIndex = 0;
+        this.startPhase('listening');
+      }
     } else {
-      // Done
       if (this.sessionDay && this.sessionSource === 'day') {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].listening = true;
@@ -433,7 +598,6 @@ const App = {
     this.setText('quiz-word', this.sessionMode === 'listening' ? '🔊 ??　??' : w.word);
     this.setText('quiz-progress', `${this.sessionIndex + 1}/${this.sessionWords.length}`);
 
-    // Generate choices
     const correct = w.meaning;
     const distractors = this.getDistractors(w, 3);
     const all = this.shuffleArr([correct, ...distractors]);
@@ -450,7 +614,6 @@ const App = {
       choicesEl.appendChild(btn);
     });
 
-    // Timer
     this.quizTimerLeft = 10;
     this.updateTimerUI(10);
     this.quizTimer = setInterval(() => {
@@ -462,7 +625,6 @@ const App = {
       }
     }, 1000);
 
-    // Auto-play speech for listening mode
     if (this.sessionMode === 'listening') {
       setTimeout(() => this.speak(w.word), 500);
     }
@@ -487,14 +649,13 @@ const App = {
     const correct = w.meaning;
     const isCorrect = choice === correct;
 
-    // Update progress
     if (!State.progress[w.word]) State.progress[w.word] = { seen: true, correct: 0, wrong: 0, mastered: false };
     if (isCorrect) {
       State.progress[w.word].correct++;
       State.weakWords.delete(w.word);
       if (State.progress[w.word].correct >= 3) State.progress[w.word].mastered = true;
       this.sessionCorrect++;
-      this.playCelebration();
+      this.playCorrectEffect(w.topic);
     } else {
       State.progress[w.word].wrong++;
       State.weakWords.add(w.word);
@@ -502,13 +663,11 @@ const App = {
     saveState();
     this.updateHeader();
 
-    // Reveal listening word
     if (this.sessionMode === 'listening') {
       const qw = document.getElementById('quiz-word');
       if (qw) qw.textContent = w.word;
     }
 
-    // Highlight choices
     document.querySelectorAll('.choice-btn').forEach(b => {
       b.classList.add('disabled');
       const txt = b.querySelector('span:last-child')?.textContent;
@@ -516,20 +675,55 @@ const App = {
       else if (b === btn) b.classList.add('wrong');
     });
 
-    // Feedback
+    // Feedback panel
     const feedback = document.getElementById('quiz-feedback');
     const icon = document.getElementById('feedback-icon');
     const msg = document.getElementById('feedback-msg');
     const correctEl = document.getElementById('feedback-correct');
+    const hintEl = document.getElementById('feedback-hint');
+    const etymEl = document.getElementById('hint-etymology');
+    const derivEl = document.getElementById('hint-derivatives');
+    const exEl = document.getElementById('hint-example');
+
     if (feedback) feedback.style.display = 'block';
     if (icon) icon.textContent = isCorrect ? '🎉' : '😅';
     if (msg) msg.textContent = isCorrect
       ? SHARK_CORRECT[Math.floor(Math.random() * SHARK_CORRECT.length)]
       : SHARK_WRONG[Math.floor(Math.random() * SHARK_WRONG.length)];
+
     if (correctEl) correctEl.textContent = isCorrect ? '' : `正解: ${correct}`;
 
-    // Auto advance after 2s
-    setTimeout(() => this.nextQuiz(), 2000);
+    // Memory hint for wrong answers
+    if (!isCorrect && hintEl && etymEl && derivEl && exEl) {
+      hintEl.style.display = 'block';
+      // Etymology
+      if (w.etymology) {
+        etymEl.textContent = '🔤 語源ヒント: ' + w.etymology.split('；')[0];
+        etymEl.style.display = 'block';
+      } else {
+        etymEl.style.display = 'none';
+      }
+      // Derivatives
+      if (w.derivatives && w.derivatives.length) {
+        derivEl.textContent = '🔗 関連語: ' + w.derivatives.slice(0,3).join('  /  ');
+        derivEl.style.display = 'block';
+      } else {
+        derivEl.style.display = 'none';
+      }
+      // Example sentence (short)
+      if (w.example) {
+        const ex = w.example.length > 75 ? w.example.slice(0,75) + '…' : w.example;
+        exEl.textContent = '📖 ' + ex;
+        exEl.style.display = 'block';
+      } else {
+        exEl.style.display = 'none';
+      }
+    } else if (hintEl) {
+      hintEl.style.display = 'none';
+    }
+
+    // Auto advance after longer delay if wrong (to read hint)
+    setTimeout(() => this.nextQuiz(), isCorrect ? 2000 : 3500);
   },
 
   nextQuiz() {
@@ -542,20 +736,16 @@ const App = {
   },
 
   getDistractors(word, count) {
-    const topic = word.topic;
-    // Prefer same topic but not same meaning
     let pool = State.vocab.filter(v =>
       v.word !== word.word &&
       v.meaning !== word.meaning &&
       !this.meaningsAreSimilar(v.meaning, word.meaning)
     );
-    // Shuffle and take
     pool = this.shuffleArr(pool);
     return pool.slice(0, count).map(v => v.meaning);
   },
 
   meaningsAreSimilar(a, b) {
-    // Basic check: shared kanji or short edit distance
     const ka = a.replace(/[；・]/g, '').slice(0, 4);
     const kb = b.replace(/[；・]/g, '').slice(0, 4);
     return ka === kb;
@@ -570,50 +760,94 @@ const App = {
       if (!window.speechSynthesis) return;
       window.speechSynthesis.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.lang = 'en-US';
-      utt.rate = 0.85;
+      utt.lang = 'en-US'; utt.rate = 0.85;
       window.speechSynthesis.speak(utt);
-    } catch(e) { /* ignore */ }
+    } catch(e) {}
   },
 
-  // ---- CELEBRATION ----
-  playCelebration() {
+  // ---- CORRECT EFFECT (new!) ----
+  playCorrectEffect(topic) {
+    // 1. Burst emoji overlay
+    const burst = document.getElementById('correct-burst');
+    const content = document.getElementById('burst-content');
+    if (burst && content) {
+      const burstEmojis = BURST_CORRECT[topic] || ['✨','⭐','💫','🌟'];
+      content.textContent = burstEmojis[Math.floor(Math.random() * burstEmojis.length)];
+      burst.style.display = 'flex';
+      setTimeout(() => { burst.style.display = 'none'; }, 650);
+    }
+
+    // 2. Marine confetti instead of plain sparks
+    this.playMarineConfetti(topic);
+
+    // 3. Sound chime
+    this.playChime();
+  },
+
+  playMarineConfetti(topic) {
     const container = document.getElementById('celebration');
     if (!container) return;
-    const colors = ['#ffd54f','#29b6f6','#4dd0e1','#ff6b6b','#81c784'];
-    for (let i = 0; i < 20; i++) {
+    const meta = TOPIC_META[topic];
+    const emojis = meta ? meta.creatures : ['🐠','🌊','⭐','🐟','✨'];
+    const colors = ['#ffd54f','#29b6f6','#4dd0e1','#ff6b6b','#81c784','#ce93d8'];
+
+    // Colored sparks
+    for (let i = 0; i < 16; i++) {
       const spark = document.createElement('div');
       spark.className = 'spark';
-      const x = 30 + Math.random() * 40;
-      const dy = -(80 + Math.random() * 200);
-      const dx = -80 + Math.random() * 160;
+      const x = 20 + Math.random() * 60;
+      const dy = -(80 + Math.random() * 220);
+      const dx = -100 + Math.random() * 200;
       spark.style.cssText = `
-        left:${x}%; top:60%;
+        left:${x}%; top:55%;
         background:${colors[Math.floor(Math.random()*colors.length)]};
         --dx:${dx}px; --dy:${dy}px;
-        animation-duration:${0.6 + Math.random()*0.6}s;
-        animation-delay:${Math.random()*0.3}s;
+        animation-duration:${0.7 + Math.random()*0.6}s;
+        animation-delay:${Math.random()*0.2}s;
         width:${4+Math.random()*8}px; height:${4+Math.random()*8}px;
+        border-radius:${Math.random()>0.5?'50%':'2px'};
       `;
       container.appendChild(spark);
       spark.addEventListener('animationend', () => spark.remove());
     }
-    // Play tone
+
+    // Fish/creature emojis floating up
+    for (let i = 0; i < 6; i++) {
+      const fish = document.createElement('div');
+      fish.className = 'fish-confetti';
+      fish.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      const x = 10 + Math.random() * 80;
+      const dy = -(120 + Math.random() * 200);
+      const dx = -60 + Math.random() * 120;
+      const dr = -180 + Math.random() * 360;
+      fish.style.cssText = `
+        left:${x}%; top:60%;
+        --dx:${dx}px; --dy:${dy}px; --dr:${dr}deg;
+        animation-duration:${1.0 + Math.random()*0.6}s;
+        animation-delay:${Math.random()*0.3}s;
+        font-size:${18+Math.random()*14}px;
+      `;
+      container.appendChild(fish);
+      fish.addEventListener('animationend', () => fish.remove());
+    }
+  },
+
+  playChime() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const notes = [523, 659, 784];
+      const notes = [523, 659, 784, 1047];
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
         osc.frequency.value = freq;
         osc.type = 'sine';
-        gain.gain.setValueAtTime(0.15, ctx.currentTime + i*0.1);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.1 + 0.3);
-        osc.start(ctx.currentTime + i*0.1);
-        osc.stop(ctx.currentTime + i*0.1 + 0.35);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime + i*0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.08 + 0.35);
+        osc.start(ctx.currentTime + i*0.08);
+        osc.stop(ctx.currentTime + i*0.08 + 0.4);
       });
-    } catch(e) { /* ignore */ }
+    } catch(e) {}
   },
 
   // ---- RESULTS ----
@@ -625,12 +859,9 @@ const App = {
     this.setText('results-score', `${correct} / ${total}`);
     this.setText('results-title', pct >= 80 ? 'Excellent Dive! 🌊' : pct >= 50 ? 'Good Progress!' : 'Keep Swimming!');
 
-    const comments = pct >= 90
-      ? "Perfect! You're a vocabulary shark! 🦈"
-      : pct >= 70
-      ? "Great work! The ocean is yours! 🌊"
-      : pct >= 50
-      ? "Keep diving deeper! 💪"
+    const comments = pct >= 90 ? "Perfect! You're a vocabulary shark! 🦈"
+      : pct >= 70 ? "Great work! The ocean is yours! 🌊"
+      : pct >= 50 ? "Keep diving deeper! 💪"
       : "Every mistake makes you stronger! 🦈";
     this.setText('results-comment', comments);
 
@@ -646,16 +877,14 @@ const App = {
       `;
     }
 
-    if (pct >= 80) this.playCelebration();
+    if (pct >= 80) this.playMarineConfetti(this.sessionTopic);
     this.renderHome();
     this.renderTopics();
     this.renderReview();
     this.showScreen('screen-results');
   },
 
-  goHome() {
-    this.showScreen('screen-home');
-  },
+  goHome() { this.showScreen('screen-home'); },
 
   retryWeak() {
     if (!State.weakWords.size) { this.showShark("Weak Wordsがありません！ 🎉"); return; }
@@ -692,7 +921,4 @@ const App = {
   },
 };
 
-// ============================================================
-// BOOT
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => App.init());
