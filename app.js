@@ -408,6 +408,7 @@ const App = {
     this.sessionDay = day;
     this.sessionWords = this.shuffleArr([...words]);
     this.sessionTopic = words[0]?.topic || null;
+    this.sessionCorrect = 0;
     this.updateBackground(this.sessionTopic);
     this.startPhase('flashcard');
   },
@@ -431,9 +432,9 @@ const App = {
     this.sessionSource = mode === 'step' ? 'topic-step' : 'topic';
     this.sessionTopic = topic;
     this.sessionWords = words;
+    this.sessionCorrect = 0;
     this.updateBackground(topic);
     this.startPhase('flashcard');
-    this.showScreen('screen-flashcard');
   },
 
   startReview(mode) {
@@ -446,6 +447,7 @@ const App = {
     }
     this.sessionSource = mode;
     this.sessionWords = this.shuffleArr(words);
+    this.sessionCorrect = 0;
     this.updateBackground(null);
     this.startPhase('quiz');
   },
@@ -453,7 +455,7 @@ const App = {
   startPhase(phase) {
     this.sessionMode = phase;
     this.sessionIndex = 0;
-    this.sessionCorrect = 0;
+    // sessionCorrect はセッション開始時のみリセット（フェーズ移行時はリセットしない）
 
     if (phase === 'flashcard') {
       this.setupFlashcard();
@@ -539,33 +541,33 @@ const App = {
   // ---- PHASE ADVANCEMENT ----
   advancePhase() {
     if (this.sessionMode === 'flashcard') {
-      if (this.sessionDay && this.sessionSource === 'day') {
+      // FC完了を記録（dayセッションのみ）
+      if (this.sessionSource === 'day' && this.sessionDay) {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].fc = true;
         saveState();
       }
-      // topic-step / topic: skip listening, go quiz → results
-      if (this.sessionSource === 'topic-step' || this.sessionSource === 'topic') {
-        this.sessionIndex = 0;
-        this.startPhase('quiz');
-      } else {
-        this.sessionIndex = 0;
-        this.startPhase('quiz');
-      }
+      this.sessionIndex = 0;
+      this.startPhase('quiz');
+
     } else if (this.sessionMode === 'quiz') {
-      if (this.sessionDay && this.sessionSource === 'day') {
+      // Quiz完了を記録（dayセッションのみ）
+      if (this.sessionSource === 'day' && this.sessionDay) {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].quiz = true;
         saveState();
       }
-      if (this.sessionSource === 'topic-step' || this.sessionSource === 'topic') {
-        this.showResults();
-      } else {
+      // topic系はクイズで終了、dayセッションのみlistingへ
+      if (this.sessionSource === 'day') {
         this.sessionIndex = 0;
         this.startPhase('listening');
+      } else {
+        this.showResults();
       }
+
     } else {
-      if (this.sessionDay && this.sessionSource === 'day') {
+      // Listening完了（dayセッションのみここに到達）
+      if (this.sessionSource === 'day' && this.sessionDay) {
         if (!State.sessions[this.sessionDay]) State.sessions[this.sessionDay] = {};
         State.sessions[this.sessionDay].listening = true;
         saveState();
