@@ -140,6 +140,7 @@ const App = {
   sessionTopic: null,
   sessionDay: null,
   quizTimer: null,
+  advanceTimer: null,
   quizTimerLeft: 10,
   quizCurrentWord: null,
   quizAnswered: false,
@@ -589,6 +590,7 @@ const App = {
 
   renderQuiz() {
     this.clearQuizTimer();
+    if (this.advanceTimer) { clearTimeout(this.advanceTimer); this.advanceTimer = null; }
     const feedback = document.getElementById('quiz-feedback');
     if (feedback) feedback.style.display = 'none';
 
@@ -725,10 +727,12 @@ const App = {
     }
 
     // Auto advance after longer delay if wrong (to read hint)
-    setTimeout(() => this.nextQuiz(), isCorrect ? 2000 : 3500);
+    this.advanceTimer = setTimeout(() => this.nextQuiz(), isCorrect ? 2000 : 3500);
   },
 
   nextQuiz() {
+    // 二重呼び出し防止
+    if (this.advanceTimer) { clearTimeout(this.advanceTimer); this.advanceTimer = null; }
     if (this.sessionIndex < this.sessionWords.length - 1) {
       this.sessionIndex++;
       this.renderQuiz();
