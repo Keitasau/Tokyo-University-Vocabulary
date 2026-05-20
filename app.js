@@ -548,6 +548,7 @@ const App = {
         State.sessions[this.sessionDay].fc = true;
         saveState();
       }
+      this.sessionWords = this.shuffleArr([...this.sessionWords]); // クイズ用に再シャッフル
       this.sessionIndex = 0;
       this.startPhase('quiz');
 
@@ -558,8 +559,9 @@ const App = {
         State.sessions[this.sessionDay].quiz = true;
         saveState();
       }
-      // topic系はクイズで終了、dayセッションのみlistingへ
+      // topic系はクイズで終了、dayセッションのみlisteningへ
       if (this.sessionSource === 'day') {
+        this.sessionWords = this.shuffleArr([...this.sessionWords]); // リスニング用に再シャッフル
         this.sessionIndex = 0;
         this.startPhase('listening');
       } else {
