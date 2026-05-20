@@ -1,1180 +1,639 @@
-(function () {
-  'use strict';
+document.addEventListener("DOMContentLoaded", () => {
+  const $ = (id) => document.getElementById(id);
 
-  var DATA_FILE = 'vocabulary.json';
-  var STORAGE_KEY = 'tuv_recovery_progress_v1';
-  var WEAK_STORAGE_KEY = 'weakWordsState';
-  var TIMER_SECONDS = 10;
-
-  var app = null;
-  var data = null;
-  var state = null;
-  var weakState = null;
-  var currentDayIndex = 0;
-  var currentMode = 'home';
-  var flashIndex = 0;
-  var flashFlipped = false;
-  var quiz = null;
-  var quizTimer = null;
-  var quizAutoNext = null;
-  var lastClearEvent = null;
-  var lastWeakClear = false;
-
-  var fallbackData = {
-    appTitle: 'Academic Vocabulary Network Adventure',
-    unit: { id: 'unit1', title: 'Unit 1: Perception Sea', coreQuestion: 'Do we see reality itself?' },
-    units: [
-      { id: 'unit1', title: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', coreQuestion: 'Do we see reality itself?' },
-      { id: 'unit2', title: 'Unit 2: Language Sea', seaTitle: 'Language Sea', coreQuestion: 'How does language create meaning?' }
-    ],
-    days: []
+  const STORAGE_KEY = "avnTodaiProgress.v1";
+  const SENSEI = {
+    home: "今日も知性の海を探検しよう！",
+    correct: "いいね！意味にすぐアクセスできているよ！",
+    wrong: "大丈夫。もう一度つながりで覚えよう！",
+    clear: "この海域の語彙ネットワークが見えてきたね！"
   };
 
-  document.addEventListener('DOMContentLoaded', init);
+  let vocab = [];
+  let topics = [];
+  let currentTopic = "";
+  let currentItems = [];
+  let currentIndex = 0;
+  let isFlipped = false;
+  let quizItems = [];
+  let quizIndex = 0;
+  let quizCurrent = null;
+  let quizMode = "quiz";
+  let audioCtx = null;
+  let userInteracted = false;
 
-  function init() {
-    app = document.getElementById('app');
-    if (!app) {
-      app = document.createElement('div');
-      app.id = 'app';
-      app.className = 'app-shell';
-      document.body.appendChild(app);
-    }
+  const state = loadState();
 
-    loadData()
-      .then(function (loaded) {
-        data = normalizeData(loaded || fallbackData);
-        state = loadState(data);
-        weakState = loadWeakState();
-        currentDayIndex = firstUsableDayIndex();
-        render();
-      })
-      .catch(function (error) {
-        console.error(error);
-        data = normalizeData(fallbackData);
-        state = loadState(data);
-        weakState = loadWeakState();
-        currentDayIndex = firstUsableDayIndex();
-        renderErrorNotice('vocabulary.json の読み込みに失敗しました。ファイル名と配置を確認してください。');
-      });
+  function safeText(id, value) {
+    const el = $(id);
+    if (el) el.textContent = value == null ? "" : String(value);
   }
 
-  function loadData() {
-    if (!window.fetch) return Promise.resolve(fallbackData);
-    return fetch(DATA_FILE, { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) throw new Error('vocabulary.json not found');
-      return res.json();
-    });
+  function safeHTML(id, value) {
+    const el = $(id);
+    if (el) el.innerHTML = value == null ? "" : String(value);
   }
 
-  function normalizeData(src) {
-    var clean = src && Array.isArray(src.days) && src.days.length ? src : fallbackData;
-    clean.days.forEach(function (day, index) {
-      if (!day.id) day.id = 'unit1-day' + (index + 1);
-      if (!day.day) day.day = index + 1;
-      if (!day.unitId) day.unitId = day.id.indexOf('unit2-') === 0 ? 'unit2' : 'unit1';
-      if (!day.unitNumber) day.unitNumber = day.unitId === 'unit2' ? 2 : 1;
-      if (!day.unitDay) day.unitDay = day.unitId === 'unit2' ? Math.max(1, (Number(day.day) || index + 1) - 7) : (Number(day.day) || index + 1);
-      if (!day.seaTitle) day.seaTitle = day.unitId === 'unit2' ? 'Language Sea' : 'Perception Sea';
-      if (!day.unitTitle) day.unitTitle = 'Unit ' + day.unitNumber + ': ' + day.seaTitle;
-      if (!Array.isArray(day.words)) day.words = [];
-      day.words.forEach(function (word) {
-        word.word = String(word.word || '').trim();
-        word.meaning = String(word.meaning || '').trim();
-      });
-    });
-    return clean;
+  function showError(message) {
+    const box = $("errorBox");
+    if (!box) return;
+    box.textContent = message;
+    box.classList.remove("hidden");
   }
 
-  function defaultState(sourceData) {
-    var s = { unlocked: {}, completed: {}, clears: {} };
-    sourceData.days.forEach(function (day, index) {
-      s.unlocked[day.id] = index === 0;
-      s.completed[day.id] = false;
-      s.clears[day.id] = { listening: false, quiz: false, flashcard: false };
-    });
-    return s;
+  function clearError() {
+    const box = $("errorBox");
+    if (!box) return;
+    box.textContent = "";
+    box.classList.add("hidden");
   }
 
-  function loadState(sourceData) {
-    var base = defaultState(sourceData);
+  function loadState() {
+    const fallback = {
+      known: {},
+      unsure: {},
+      quiz: { correct: 0, total: 0 },
+      listening: { correct: 0, total: 0 }
+    };
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return base;
-      var saved = JSON.parse(raw);
-      sourceData.days.forEach(function (day, index) {
-        if (saved.unlocked && typeof saved.unlocked[day.id] === 'boolean') base.unlocked[day.id] = saved.unlocked[day.id];
-        if (saved.completed && typeof saved.completed[day.id] === 'boolean') base.completed[day.id] = saved.completed[day.id];
-        if (saved.clears && saved.clears[day.id]) {
-          base.clears[day.id].listening = !!saved.clears[day.id].listening;
-          base.clears[day.id].quiz = !!saved.clears[day.id].quiz;
-          base.clears[day.id].flashcard = !!saved.clears[day.id].flashcard;
-        }
-        if (index === 0) base.unlocked[day.id] = true;
-      });
-      applyUnlockRules(base, sourceData);
-      return base;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return {
+        known: parsed.known && typeof parsed.known === "object" ? parsed.known : {},
+        unsure: parsed.unsure && typeof parsed.unsure === "object" ? parsed.unsure : {},
+        quiz: parsed.quiz || { correct: 0, total: 0 },
+        listening: parsed.listening || { correct: 0, total: 0 }
+      };
     } catch (e) {
-      console.warn('Progress reset because saved state was invalid.', e);
-      return base;
+      return fallback;
     }
   }
 
   function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (e) { console.warn('progress localStorage save failed', e); }
-  }
-
-  function loadWeakState() {
-    var empty = { version: 1, words: {} };
     try {
-      var raw = localStorage.getItem(WEAK_STORAGE_KEY);
-      if (!raw) return empty;
-      var saved = JSON.parse(raw);
-      if (!saved || typeof saved !== 'object') return empty;
-      if (!saved.words || typeof saved.words !== 'object') saved.words = {};
-      saved.version = 1;
-      return saved;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
-      console.warn('Weak Words reset because saved state was invalid.', e);
-      return empty;
+      showError("学習記録の保存に失敗しました。ブラウザの保存容量や設定を確認してください。");
     }
   }
 
-  function saveWeakState() {
-    try { localStorage.setItem(WEAK_STORAGE_KEY, JSON.stringify(weakState)); }
-    catch (e) { console.warn('weak localStorage save failed', e); }
+  function escapeHTML(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
-  function addWeakWord(word, source) {
-    if (!word || !word.word) return;
-    var key = word.word.toLowerCase();
-    var now = new Date().toISOString();
-    var current = weakState.words[key] || {};
-    weakState.words[key] = {
-      word: word.word,
-      meaning: word.meaning,
-      pos: word.pos || '',
-      example: word.example || '',
-      translation: word.translation || '',
-      root: word.root || '',
-      mistakeCount: (Number(current.mistakeCount) || 0) + 1,
-      lastMistakeAt: now,
-      source: source || 'quiz'
-    };
-    saveWeakState();
+  function setSensei(message) {
+    safeText("senseiComment", message || SENSEI.home);
   }
 
-  function removeWeakWord(word) {
-    var key = typeof word === 'string' ? word.toLowerCase() : (word && word.word ? word.word.toLowerCase() : '');
-    if (!key) return;
-    if (weakState.words[key]) {
-      delete weakState.words[key];
-      saveWeakState();
+  function activateAudio() {
+    userInteracted = true;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx && !audioCtx) audioCtx = new Ctx();
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    } catch (e) {
+      audioCtx = null;
     }
   }
 
-  function clearWeakWords() {
-    weakState = { version: 1, words: {} };
-    saveWeakState();
+  document.body.addEventListener("pointerdown", activateAudio, { once: true });
+  document.body.addEventListener("keydown", activateAudio, { once: true });
+
+  function playSuccessSound() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      const now = audioCtx.currentTime;
+      const master = audioCtx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+      master.connect(audioCtx.destination);
+      [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        gain.gain.setValueAtTime(0, now + i * 0.08);
+        gain.gain.linearRampToValueAtTime(0.7, now + i * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.22);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.25);
+      });
+    } catch (e) {}
   }
 
-  function weakList() {
-    return Object.keys(weakState.words || {}).map(function (key) { return weakState.words[key]; })
-      .filter(function (w) { return w && w.word && w.meaning; })
-      .sort(function (a, b) { return String(a.word).localeCompare(String(b.word)); });
+  function speakWord(word) {
+    try {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = "en-US";
+      utter.rate = 0.86;
+      utter.pitch = 1.0;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {}
   }
 
-  function applyUnlockRules(s, sourceData) {
-    sourceData.days.forEach(function (day, index) {
-      var clears = s.clears[day.id] || { listening: false, quiz: false, flashcard: false };
-      s.completed[day.id] = !!(clears.listening && clears.quiz && clears.flashcard);
-      if (index === 0) s.unlocked[day.id] = true;
-      if (s.completed[day.id] && sourceData.days[index + 1]) {
-        s.unlocked[sourceData.days[index + 1].id] = true;
-      }
-    });
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    const el = $(id);
+    if (el) el.classList.add("active");
+    clearError();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function firstUsableDayIndex() {
-    var last = 0;
-    data.days.forEach(function (day, index) {
-      if (state.unlocked[day.id]) last = index;
-    });
-    return last;
+  function setSeaBackground(topic) {
+    const shell = $("appShell");
+    if (!shell) return;
+    shell.className = shell.className.replace(/\bsea-bg-\d\b/g, "").trim();
+    const idx = Math.max(0, topics.indexOf(topic));
+    shell.classList.add("sea-bg-" + (idx % 6));
   }
 
-  function currentDay() {
-    if (!data || !Array.isArray(data.days) || data.days.length === 0) {
-      return { id: 'unit1-day1', day: 1, unitId: 'unit1', unitNumber: 1, unitDay: 1, unitTitle: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', title: 'Day 1', theme: '', words: [] };
-    }
-    return data.days[currentDayIndex] || data.days[0];
+  function groupByTopic() {
+    const set = new Set(vocab.map((x) => x.topic || "未分類"));
+    topics = Array.from(set);
   }
 
-  function h(text) {
-    return String(text == null ? '' : text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function getItemsByTopic(topic) {
+    return vocab.filter((x) => (x.topic || "未分類") === topic);
   }
 
-  function render() {
-    if (!app || !data || !state || !weakState) return;
-    var day = currentDay();
-    app.innerHTML = '';
-    app.innerHTML = '<div class="semantic-atmosphere"><span class="particle p1"></span><span class="particle p2"></span><span class="particle p3"></span><span class="particle p4"></span><span class="particle p5"></span></div>';
-    app.appendChild(buildHeader(day));
-    var main = document.createElement('main');
-    main.className = 'main';
-
-    if (currentMode === 'home') main.innerHTML = homeHtml(day);
-    else if (currentMode === 'listening') main.innerHTML = modeIntroHtml(day, 'listening');
-    else if (currentMode === 'quiz') main.innerHTML = modeIntroHtml(day, 'quiz');
-    else if (currentMode === 'flashcard') main.innerHTML = flashcardHtml(day);
-    else if (currentMode === 'weak') main.innerHTML = weakHtml();
-    else main.innerHTML = homeHtml(day);
-
-    app.appendChild(main);
-    app.appendChild(buildBottomNav());
-    bindEvents();
+  function getKnownCount(items) {
+    return items.filter((x) => state.known[x.id]).length;
   }
 
-  function buildHeader(day) {
-    var header = document.createElement('header');
-    header.className = 'hero';
-    var unitTitle = day.unitTitle || (data.unit && data.unit.title ? data.unit.title : 'Academic Vocabulary Network');
-    var progress = progressPercent();
-    var area = seaAreaName(day);
-    var weakCount = weakList().length;
-    header.innerHTML = '' +
-      '<div class="topline"><div><div class="app-title">' + h(data.appTitle || 'Vocabulary Adventure') + '</div><div class="unit-title">' + h(unitTitle) + '</div></div>' +
-      '<button class="ghost-btn" data-action="reset">Reset</button></div>' +
-      '<div class="hero-main"><div><h1>' + h(day.title) + '</h1><p>' + h(day.theme || '') + '</p><p class="core-question">' + h(day.coreQuestion || '') + '</p></div>' +
-      '<div class="level-badge">Lv.' + h(sharkLevel()) + '</div></div>' +
-      '<div class="current-area">Current Area: ' + h(area) + '</div>' +
-      seaProgressHtml(progress, day) +
-      '<div class="weak-mini"><span>Weak Words</span><strong>' + h(weakCount) + '</strong><button data-action="mode" data-mode="weak">Review</button></div>';
-    return header;
+  function getUnsureCount(items) {
+    return items.filter((x) => state.unsure[x.id]).length;
   }
 
-  function progressPercent() {
-    var total = data.days.length || 1;
-    var done = data.days.filter(function (d) { return state.completed[d.id]; }).length;
-    return Math.round((done / total) * 100);
+  function percent(num, den) {
+    if (!den) return 0;
+    return Math.round((num / den) * 100);
   }
 
-  function completedDayCount() {
-    return data.days.filter(function (d) { return state.completed[d.id]; }).length;
+  function accuracy(obj) {
+    if (!obj || !obj.total) return 0;
+    return Math.round((obj.correct / obj.total) * 100);
   }
 
-  function sharkLevel() {
-    return completedDayCount() + 1;
+  function renderHome() {
+    setSeaBackground("");
+    setSensei(SENSEI.home);
+    const known = getKnownCount(vocab);
+    const unsure = getUnsureCount(vocab);
+    safeHTML("homeStats", `
+      <div class="stat"><span>全体進捗</span><b>${percent(known, vocab.length)}%</b></div>
+      <div class="stat"><span>総単語数</span><b>${vocab.length}</b></div>
+      <div class="stat"><span>覚えた</span><b>${known}</b></div>
+      <div class="stat"><span>まだ不安</span><b>${unsure}</b></div>
+      <div class="stat"><span>4択正答率</span><b>${accuracy(state.quiz)}%</b></div>
+      <div class="stat"><span>Listening正答率</span><b>${accuracy(state.listening)}%</b></div>
+    `);
+
+    const summary = topics.map((topic, i) => {
+      const items = getItemsByTopic(topic);
+      const k = getKnownCount(items);
+      const acc = topicAccuracy(topic);
+      return `
+        <div class="progress-topic-card">
+          <h3>${escapeHTML(topic)}</h3>
+          <p>${items.length}語 / 学習済み ${k}語 / 正答率 ${acc}%</p>
+          <div class="progress-bar"><div class="progress-fill" style="width:${percent(k, items.length)}%"></div></div>
+        </div>
+      `;
+    }).join("");
+    safeHTML("homeTopicSummary", summary);
   }
 
-  function seaAreaName(day) {
-    var perceptionNames = ['Meaning Lagoon', 'Evidence Current', 'Concept Atoll', 'Bias Trench', 'Abstraction Shelf', 'Framework Reef', 'Reflection Abyss'];
-    var languageNames = ['Symbol Lagoon', 'Expression Current', 'Narrative Reef', 'Rhetoric Trench', 'Translation Shelf', 'Metaphor Grotto', 'Media Abyss'];
-    var names = day && day.unitId === 'unit2' ? languageNames : perceptionNames;
-    var n = day && day.unitDay ? Number(day.unitDay) : (day && day.day ? Number(day.day) : 1);
-    return names[n - 1] || ((day && day.seaTitle ? day.seaTitle : 'Sea') + ' Area ' + n);
+  function topicAccuracy(topic) {
+    const items = getItemsByTopic(topic);
+    if (!items.length) return 0;
+    const known = getKnownCount(items);
+    return percent(known, items.length);
   }
 
-  function unitProgressPercent(day) {
-    var unitId = day && day.unitId ? day.unitId : 'unit1';
-    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
-    var total = unitDays.length || 1;
-    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
-    return Math.round((done / total) * 100);
-  }
-
-
-  function unitProgressById(unitId) {
-    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
-    if (!unitDays.length) return 0;
-    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
-    return Math.round((done / unitDays.length) * 100);
-  }
-
-  function unitDayCounts(unitId) {
-    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
-    var done = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
-    var unlocked = unitDays.filter(function (d) { return state.unlocked[d.id]; }).length;
-    return { total: unitDays.length, done: done, unlocked: unlocked };
-  }
-
-  function firstUnlockedDayIndexForUnit(unitId) {
-    var found = -1;
-    data.days.forEach(function (day, index) {
-      if (day.unitId === unitId && state.unlocked[day.id] && found === -1) found = index;
-    });
-    return found;
-  }
-
-  function nextOpenDayIndexForUnit(unitId) {
-    var fallback = -1;
-    var target = -1;
-    data.days.forEach(function (day, index) {
-      if (day.unitId !== unitId || !state.unlocked[day.id]) return;
-      if (fallback === -1) fallback = index;
-      if (!state.completed[day.id] && target === -1) target = index;
-    });
-    return target !== -1 ? target : fallback;
-  }
-
-  function seaSelectionHtml() {
-    var implementedUnits = Array.isArray(data.units) && data.units.length ? data.units : [
-      { id: 'unit1', title: 'Unit 1: Perception Sea', seaTitle: 'Perception Sea', coreQuestion: 'Do we see reality itself?' },
-      { id: 'unit2', title: 'Unit 2: Language Sea', seaTitle: 'Language Sea', coreQuestion: 'How does language create meaning?' }
-    ];
-    var comingSoon = [
-      { id: 'society', seaTitle: 'Society Sea', coreQuestion: 'How do individuals and systems shape each other?' },
-      { id: 'logic', seaTitle: 'Logic Sea', coreQuestion: 'How do reasons connect?' },
-      { id: 'ai', seaTitle: 'AI Sea', coreQuestion: 'What does intelligence mean in the age of machines?' }
-    ];
-    return '<section class="card sea-select-card"><div class="sea-map-bg" aria-hidden="true"></div><div class="eyebrow">Sea Selection</div><h2>知性の海域を選ぶ</h2><p>Perception SeaからLanguage Seaへ。単語を覚えるだけでなく、評論を読むための概念ネットワークを探索します。</p>' +
-      '<div class="sea-grid">' + implementedUnits.map(function (unit, i) { return seaCardHtml(unit, i + 1, false); }).join('') + comingSoon.map(function (unit, i) { return seaCardHtml(unit, implementedUnits.length + i + 1, true); }).join('') + '</div></section>';
-  }
-
-  function seaCardHtml(unit, number, lockedPlaceholder) {
-    var unitId = unit.id;
-    var progress = lockedPlaceholder ? 0 : unitProgressById(unitId);
-    var counts = lockedPlaceholder ? { total: 7, done: 0, unlocked: 0 } : unitDayCounts(unitId);
-    var selectableIndex = lockedPlaceholder ? -1 : nextOpenDayIndexForUnit(unitId);
-    var open = selectableIndex !== -1;
-    var active = !lockedPlaceholder && currentDay().unitId === unitId;
-    var icon = lockedPlaceholder || !open ? '🔒' : '🌊';
-    var status = lockedPlaceholder ? 'COMING SOON' : (open ? (progress === 100 ? 'FULLY EXPLORED' : 'OPEN') : 'LOCKED');
-    var barWidth = Math.max(0, Math.min(100, progress));
-    return '<button class="sea-card ' + (active ? 'active ' : '') + (lockedPlaceholder || !open ? 'locked ' : '') + '" data-action="selectUnit" data-unit-id="' + h(unitId) + '" ' + (open ? '' : 'disabled') + '>' +
-      '<div class="sea-card-top"><span class="sea-icon">' + icon + '</span><span class="sea-number">Sea ' + h(number) + '</span></div>' +
-      '<strong>' + h(unit.seaTitle || unit.title || unitId) + '</strong>' +
-      '<small>' + h(unit.coreQuestion || 'Coming soon') + '</small>' +
-      '<div class="sea-card-progress"><span>' + h(progress) + '% explored</span><span>' + h(counts.done) + ' / ' + h(counts.total) + '</span></div>' +
-      '<div class="mini-bar"><div style="width:' + h(barWidth) + '%"></div></div>' +
-      '<div class="sea-status">' + h(status) + '</div>' +
-      '</button>';
-  }
-
-
-  function seaMapHtml(activeDay) {
-    var unitId = activeDay && activeDay.unitId ? activeDay.unitId : 'unit1';
-    var unitDays = data.days.filter(function (d) { return d.unitId === unitId; });
-    if (!unitDays.length) return '';
-    var sea = activeDay && activeDay.seaTitle ? activeDay.seaTitle : 'Learning Sea';
-    var progress = unitProgressPercent(activeDay);
-    var explored = unitDays.filter(function (d) { return state.completed[d.id]; }).length;
-    return '<section class="card sea-map-card"><div class="sea-map-head"><div><div class="eyebrow">Sea Map</div><h2>' + h(sea) + ' Exploration Map</h2><p>Dayを単なる一覧ではなく、海域ノードとして進みます。CLEAR済・現在地・LOCKが一目で分かります。</p></div><div class="map-percent"><strong>' + h(progress) + '%</strong><span>explored</span></div></div>' +
-      '<div class="sea-map-route" aria-label="' + h(sea) + ' exploration route">' + unitDays.map(function (d) { return seaMapNodeHtml(d); }).join('') + '</div>' +
-      '<div class="sea-map-legend"><span><i class="legend-dot clear"></i>CLEAR</span><span><i class="legend-dot current"></i>CURRENT</span><span><i class="legend-dot open"></i>OPEN</span><span><i class="legend-dot locked"></i>LOCK</span></div>' +
-      '<div class="map-story">' + h(seaMapStory(sea, explored, unitDays.length)) + '</div></section>';
-  }
-
-  function seaMapNodeHtml(day) {
-    var index = data.days.indexOf(day);
-    var unlocked = !!state.unlocked[day.id];
-    var completed = !!state.completed[day.id];
-    var current = day.id === currentDay().id;
-    var status = completed ? 'CLEAR' : (current ? 'CURRENT' : (unlocked ? 'OPEN' : 'LOCK'));
-    var cls = completed ? 'clear' : (current ? 'current' : (unlocked ? 'open' : 'locked'));
-    var area = seaAreaName(day);
-    var icon = seaMapIcon(day, cls);
-    return '<button class="map-node ' + h(cls) + '" data-action="selectDay" data-index="' + h(index) + '" ' + (unlocked ? '' : 'disabled') + '>' +
-      '<span class="node-connector" aria-hidden="true"></span>' +
-      '<span class="node-icon">' + h(icon) + '</span>' +
-      '<span class="node-main"><strong>Day ' + h(day.unitDay || day.day) + '</strong><small>' + h(area) + '</small></span>' +
-      '<span class="node-status">' + h(status) + '</span>' +
-      '</button>';
-  }
-
-  function seaMapIcon(day, statusClass) {
-    if (statusClass === 'locked') return '🔒';
-    if (statusClass === 'clear') return '✅';
-    var n = day && day.unitDay ? Number(day.unitDay) : 1;
-    var icons = ['🪸', '🌊', '🐚', '🕳️', '🐟', '🪨', '🌌'];
-    return icons[(n - 1) % icons.length];
-  }
-
-  function seaMapStory(sea, explored, total) {
-    if (explored <= 0) return sea + 'の入口に到着しました。まずは最初のリーフから探索を始めます。';
-    if (explored >= total) return sea + 'の全海域を踏破しました。次の知的海域へ進む準備ができています。';
-    return sea + 'を' + explored + ' / ' + total + '地点まで探索中です。次のノードを開くには、現在地の3モードをCLEARしてください。';
-  }
-
-  function seaProgressHtml(progress, day) {
-    var unitProgress = unitProgressPercent(day);
-    var filled = Math.max(0, Math.min(10, Math.round(unitProgress / 10)));
-    var bar = '';
-    for (var i = 0; i < 10; i++) bar += i < filled ? '█' : '░';
-    var sea = day && day.seaTitle ? day.seaTitle : 'Learning Sea';
-    return '<div class="sea-progress"><div class="progress-label"><span>' + h(sea) + '</span><span>' + h(unitProgress) + '% explored</span></div><div class="bar-shell"><div class="bar-fill" style="width:' + h(unitProgress) + '%"></div></div><div class="pixel-bar">' + h(bar) + '</div><div class="overall-progress">Total Voyage: ' + h(progress) + '% explored</div></div>';
-  }
-
-  function dayClearEventHtml(event) {
-    if (!event) return '';
-    var nextLine = event.nextDay ? 'New Sea Unlocked: Unit ' + (event.nextDay.unitNumber || 1) + ' Day ' + (event.nextDay.unitDay || event.nextDay.day) : (event.sea || 'This Sea') + ' fully explored';
-    return '<section class="clear-event"><div class="sparkle">✦✧✦</div><div class="clear-label">DAY CLEAR</div><h2>' + h(event.area) + ' discovered</h2><p>' + h(nextLine) + '</p><p>Shark Sensei Lv.' + h(event.oldLevel) + ' → Lv.' + h(event.newLevel) + '</p><p>Perception Sea ' + h(event.progress) + '% explored</p></section>';
-  }
-
-  function weakClearEventHtml() {
-    if (!lastWeakClear) return '';
-    return '<section class="clear-event weak-clear"><div class="sparkle">✦↺✦</div><div class="clear-label">REVIEW CLEAR</div><h2>Recovered Words Returned to the Sea</h2><p>苦手語を再び潜って回収しました。</p></section>';
-  }
-
-  function homeHtml(day) {
-    var clears = state.clears[day.id];
-    var completed = state.completed[day.id];
-    var next = data.days[currentDayIndex + 1];
-    var status = completed ? 'CLEAR：この海域の探索は完了しました。次の海へ進めます。' : 'Flashcard / Quiz / Listening をすべてCLEARすると次の海域が解放されます。';
-    var area = seaAreaName(day);
-    var celebration = lastClearEvent && lastClearEvent.dayId === day.id ? dayClearEventHtml(lastClearEvent) : '';
-    return '' + celebration + seaSelectionHtml() + seaMapHtml(day) +
-      '<section class="card home-card"><div class="eyebrow">Unit ' + h(day.unitNumber || 1) + ' Day ' + h(day.unitDay || day.day) + ' / 7 ・ Voyage Day ' + h(day.day) + ' ・ ' + h(day.words.length) + ' words</div>' +
-      '<h2>今日の海域：' + h(area) + '</h2><p>' + h(status) + '</p>' +
-      '<div class="status-line"><span>Shark Sensei Lv.' + h(sharkLevel()) + '</span><span>' + h(day.seaTitle || 'Learning Sea') + ' ' + h(unitProgressPercent(day)) + '% explored</span></div>' +
-      '<div class="clear-row">' + clearPill('Flashcard', clears.flashcard) + clearPill('Quiz', clears.quiz) + clearPill('Listening', clears.listening) + '</div>' +
-      '<div class="mode-grid">' +
-      modeCard('flashcard', '📘', 'Flashcard', '例文・語源・意味を確認します。') +
-      modeCard('quiz', '🫧', '英語 → 日本語4択', '語の意味を正確に確認します。') +
-      modeCard('listening', '🎧', '音声 → 日本語4択', '英単語を聞いて意味を即時想起します。') +
-      modeCard('weak', '↺', 'Weak Words', '間違えた単語だけ、あとで再挑戦します。') +
-      '</div></section>' +
-      '<section class="card"><h2>Voyage Route</h2><p>Flashcard → Quiz → Listen の順で、Perception SeaからLanguage Seaへ進みます。Weak Wordsは進行判定とは完全に分離されています。</p>' +
-      '<div class="day-row">' + dayButtonsHtml() + '</div>' +
-      (next && completed ? '<button class="primary wide" data-action="nextDay">Unit ' + h(next.unitNumber || 1) + ' Day ' + h(next.unitDay || next.day) + 'へ進む</button>' : '') + '</section>';
-  }
-
-  function clearPill(label, ok) {
-    return '<div class="clear-pill ' + (ok ? 'ok' : '') + '"><span>' + h(label) + '</span><strong>' + (ok ? 'CLEAR' : '未完了') + '</strong></div>';
-  }
-
-  function modeCard(mode, icon, title, desc) {
-    return '<button class="mode-card" data-action="mode" data-mode="' + h(mode) + '"><span class="mode-icon">' + h(icon) + '</span><strong>' + h(title) + '</strong><small>' + h(desc) + '</small></button>';
-  }
-
-  function dayButtonsHtml() {
-    return data.days.map(function (day, index) {
-      var unlocked = !!state.unlocked[day.id];
-      var active = index === currentDayIndex;
-      var done = !!state.completed[day.id];
-      return '<button class="day-btn ' + (active ? 'active ' : '') + (done ? 'done ' : '') + '" data-action="selectDay" data-index="' + index + '" ' + (unlocked ? '' : 'disabled') + '><span>U' + h(day.unitNumber || 1) + '-D' + h(day.unitDay || day.day) + '</span><small>' + (unlocked ? (done ? 'CLEAR' : 'OPEN') : 'LOCK') + '</small></button>';
-    }).join('');
-  }
-
-  function modeIntroHtml(day, mode) {
-    var title = mode === 'listening' ? '音声 → 日本語4択' : '英語 → 日本語4択';
-    var lead = mode === 'listening' ? '再生ボタンで単語を聞き、日本語の意味を選びます。1問10秒です。' : '表示された英単語に合う日本語の意味を選びます。1問10秒です。';
-    return '<section class="card"><h2>' + h(title) + '</h2><p>' + h(lead) + '</p><button class="primary wide" data-action="startQuiz" data-mode="' + h(mode) + '">Start</button></section>';
-  }
-
-  function flashcardHtml(day) {
-    var safeIndex = Math.max(0, Math.min(flashIndex, day.words.length - 1));
-    flashIndex = safeIndex;
-    var word = day.words[safeIndex];
-    if (!word) return '<section class="card"><h2>単語がありません</h2></section>';
-    var clear = state.clears[day.id].flashcard;
-    return '<section class="card flash-wrap"><div class="eyebrow">' + (safeIndex + 1) + ' / ' + day.words.length + '</div>' +
-      '<button class="flash-card" data-action="flip">' +
-      (!flashFlipped ? '<div class="word-big">' + h(word.word) + '</div><div class="pos">' + h(word.pos || '') + '</div><p>タップして意味を見る</p>' : '<div class="meaning-big">' + h(word.meaning) + '</div><p class="example">' + h(word.example || '') + '</p><p class="translation">' + h(word.translation || '') + '</p><div class="root">' + h(word.root || '') + '</div>') +
-      '</button>' +
-      connectedConceptsHtml(word) +
-      knowledgeGraphHtml(word) +
-      conceptNavigationHtml(word) +
-      '<div class="button-row"><button data-action="prevCard" ' + (safeIndex === 0 ? 'disabled' : '') + '>前へ</button><button data-action="speak" data-word="' + h(word.word) + '">音声</button>' +
-      (safeIndex < day.words.length - 1 ? '<button data-action="nextCard">次へ</button>' : '<button class="primary" data-action="clearFlash">Flashcard CLEAR</button>') + '</div>' +
-      (clear ? '<p class="done-note">Flashcard CLEAR済みです。</p>' : '') + '</section>';
-  }
-
-  function weakHtml() {
-    var list = weakList();
-    if (!list.length) {
-      return '' + weakClearEventHtml() + '<section class="card empty-weak"><div class="big-icon">🌊</div><h2>Weak Wordsはありません</h2><p>間違えた単語はここに蓄積されます。通常のDay progressionとは分離されているので、安心してあとで復習できます。</p><button class="primary wide" data-action="home">Homeへ戻る</button></section>';
-    }
-    return '<section class="card"><div class="eyebrow">Dive Again</div><h2>Weak Words</h2><p>間違えた単語だけを再挑戦します。正解した語はWeak Wordsから外れます。間違えた語は残ります。</p>' +
-      '<div class="weak-list">' + list.map(function (w) {
-        return '<div class="weak-item"><div><strong>' + h(w.word) + '</strong><small>' + h(w.meaning) + '</small></div><span>×' + h(w.mistakeCount || 1) + '</span></div>';
-      }).join('') + '</div>' +
-      '<div class="button-row stack-mobile"><button class="primary" data-action="startWeakReview">Review Weak Words</button><button data-action="clearWeakConfirm">Weak Wordsを空にする</button></div></section>';
-  }
-
-  function buildBottomNav() {
-    var nav = document.createElement('nav');
-    nav.className = 'bottom-nav';
-    nav.innerHTML = '' +
-      '<button data-action="home">Home</button>' +
-      '<button data-action="mode" data-mode="flashcard">Cards</button>' +
-      '<button data-action="mode" data-mode="quiz">Quiz</button>' +
-      '<button data-action="mode" data-mode="listening">Listen</button>' +
-      '<button data-action="mode" data-mode="weak">Weak</button>';
-    return nav;
-  }
-
-  function bindEvents() {
-    app.querySelectorAll('[data-action]').forEach(function (el) {
-      el.addEventListener('click', handleAction);
-    });
-  }
-
-  function handleAction(event) {
-    var target = event.currentTarget;
-    var action = target.getAttribute('data-action');
-
-    if (action === 'home') { stopQuizTimer(); currentMode = 'home'; quiz = null; render(); return; }
-    if (action === 'mode') {
-      stopQuizTimer();
-      currentMode = target.getAttribute('data-mode') || 'home';
-      quiz = null;
-      if (currentMode === 'flashcard') { flashIndex = 0; flashFlipped = false; }
-      render();
-      return;
-    }
-    if (action === 'selectDay') { selectDay(Number(target.getAttribute('data-index'))); return; }
-    if (action === 'selectUnit') { selectUnit(target.getAttribute('data-unit-id')); return; }
-    if (action === 'startQuiz') { startQuiz(target.getAttribute('data-mode')); return; }
-    if (action === 'answer') { answerQuiz(Number(target.getAttribute('data-choice')), false); return; }
-    if (action === 'nextQuestion') { nextQuestion(); return; }
-    if (action === 'speak') { speak(target.getAttribute('data-word') || ''); return; }
-    if (action === 'navigateConcept') { navigateToConcept(target.getAttribute('data-concept') || ''); return; }
-    if (action === 'flip') {
-      flashFlipped = !flashFlipped;
-      render();
-      if (flashFlipped) {
-        var day = currentDay();
-        var word = day.words[flashIndex];
-        if (word) renderDiscoveryOverlay(word);
-      }
-      return;
-    }
-    if (action === 'prevCard') { moveCard(-1); return; }
-    if (action === 'nextCard') { moveCard(1); return; }
-    if (action === 'clearFlash') { clearMode('flashcard'); return; }
-    if (action === 'nextDay') { nextDay(); return; }
-    if (action === 'reset') { resetProgress(); return; }
-    if (action === 'startWeakReview') { startWeakReview(); return; }
-    if (action === 'clearWeakConfirm') { if (confirm('Weak Wordsだけを空にします。progressionには影響しません。')) { clearWeakWords(); lastWeakClear = false; render(); } return; }
-  }
-
-  function selectUnit(unitId) {
-    var index = nextOpenDayIndexForUnit(unitId);
-    if (index === -1) return;
-    selectDay(index);
-  }
-
-  function selectDay(index) {
-    var day = data.days[index];
-    if (!day || !state.unlocked[day.id]) return;
-    currentDayIndex = index;
-    currentMode = 'home';
-    flashIndex = 0;
-    flashFlipped = false;
-    stopQuizTimer();
-    quiz = null;
-    if (!lastClearEvent || lastClearEvent.dayId !== day.id) lastClearEvent = null;
-    render();
-  }
-
-  function startQuiz(mode) {
-    var day = currentDay();
-    if (!day || !day.words.length) { currentMode = 'home'; render(); return; }
-    stopQuizTimer();
-    quiz = {
-      type: 'day',
-      mode: mode === 'listening' ? 'listening' : 'quiz',
-      order: shuffle(day.words.map(function (_, i) { return i; })),
-      words: day.words.slice(),
-      pos: 0,
-      score: 0,
-      locked: false,
-      selected: -1,
-      timedOut: false,
-      timeLeft: TIMER_SECONDS
-    };
-    renderQuizQuestion();
-  }
-
-  function startWeakReview() {
-    var list = weakList();
-    if (!list.length) { currentMode = 'weak'; render(); return; }
-    stopQuizTimer();
-    currentMode = 'weak';
-    lastWeakClear = false;
-    quiz = {
-      type: 'weak',
-      mode: 'weak',
-      order: shuffle(list.map(function (_, i) { return i; })),
-      words: list,
-      pos: 0,
-      score: 0,
-      locked: false,
-      selected: -1,
-      timedOut: false,
-      timeLeft: TIMER_SECONDS
-    };
-    renderQuizQuestion();
-  }
-
-  function renderQuizQuestion() {
-    var main = app.querySelector('.main');
-    if (!main || !quiz) return;
-    stopQuizTimer();
-    var word = quiz.words[quiz.order[quiz.pos]];
-    if (!word) { finishQuiz(); return; }
-    var pool = quiz.type === 'weak' ? allWords() : currentDay().words;
-    var choices = makeChoices(word, pool);
-    quiz.correctChoice = choices.indexOf(word.meaning);
-    quiz.timeLeft = TIMER_SECONDS;
-    quiz.locked = false;
-    quiz.selected = -1;
-    quiz.timedOut = false;
-
-    var title = quiz.type === 'weak' ? 'Weak Words Review' : (quiz.mode === 'listening' ? '音声 → 日本語4択' : '英語 → 日本語4択');
-    main.innerHTML = '<section class="card quiz-card"><div class="quiz-top"><span>' + h(title) + '</span><span>' + (quiz.pos + 1) + ' / ' + quiz.order.length + '</span></div>' +
-      '<div class="timer" aria-live="polite">⏱ <span id="timerText">' + TIMER_SECONDS + '</span> sec</div>' +
-      (quiz.mode === 'listening' ? '<button class="sound-btn" data-action="speak" data-word="' + h(word.word) + '">▶ 音声を再生</button><p>聞こえた英単語の意味を選んでください。</p>' : '<h2 class="quiz-word">' + h(word.word) + '</h2><p>この英単語の意味を選んでください。</p>') +
-      '<div class="choices">' + choices.map(function (choice, i) { return '<button data-action="answer" data-choice="' + i + '">' + h(choice) + '</button>'; }).join('') + '</div><div id="feedback" class="feedback"></div></section>';
-    bindEvents();
-    if (quiz.mode === 'listening') setTimeout(function () { speak(word.word); }, 250);
-    startQuizTimer();
-  }
-
-  function startQuizTimer() {
-    var text = document.getElementById('timerText');
-    quizTimer = setInterval(function () {
-      if (!quiz || quiz.locked) { stopQuizTimer(); return; }
-      quiz.timeLeft -= 1;
-      if (text) text.textContent = String(Math.max(0, quiz.timeLeft));
-      var timer = app.querySelector('.timer');
-      if (timer && quiz.timeLeft <= 3) timer.classList.add('urgent');
-      if (quiz.timeLeft <= 0) {
-        stopQuizTimer();
-        answerQuiz(-1, true);
-      }
-    }, 1000);
-  }
-
-  function stopQuizTimer() {
-    if (quizTimer) clearInterval(quizTimer);
-    if (quizAutoNext) clearTimeout(quizAutoNext);
-    quizTimer = null;
-    quizAutoNext = null;
-  }
-
-  function answerQuiz(choiceIndex, timedOut) {
-    if (!quiz || quiz.locked) return;
-    stopQuizTimer();
-    quiz.locked = true;
-    quiz.selected = choiceIndex;
-    quiz.timedOut = !!timedOut;
-    var word = quiz.words[quiz.order[quiz.pos]];
-    var correct = choiceIndex === quiz.correctChoice;
-    if (correct) {
-      quiz.score += 1;
-      if (quiz.type === 'weak') removeWeakWord(word.word);
-    } else {
-      addWeakWord(word, quiz.type === 'weak' ? 'weak-review' : quiz.mode);
-    }
-    showQuizFeedback(correct, timedOut, word);
-    quizAutoNext = setTimeout(function () { nextQuestion(); }, correct ? 900 : 1350);
-  }
-
-  function showQuizFeedback(correct, timedOut, word) {
-    var choiceButtons = app.querySelectorAll('.choices button');
-    choiceButtons.forEach(function (btn, i) {
-      btn.disabled = true;
-      if (i === quiz.correctChoice) btn.classList.add('correct');
-      if (i === quiz.selected && !correct) btn.classList.add('wrong');
-    });
-    var feedback = document.getElementById('feedback');
-    if (!feedback) return;
-    if (correct) {
-      feedback.className = 'feedback ok';
-      feedback.innerHTML = '正解。' + (quiz.type === 'weak' ? 'Weak Wordsから回収しました。' : '');
-    } else {
-      feedback.className = 'feedback ng';
-      feedback.innerHTML = (timedOut ? '時間切れ。' : '不正解。') + '<br><strong>' + h(word.word) + '</strong> = ' + h(word.meaning) + '<br>Weak Wordsへ追加しました。';
-    }
-  }
-
-  function nextQuestion() {
-    if (!quiz) return;
-    stopQuizTimer();
-    quiz.pos += 1;
-    if (quiz.pos >= quiz.order.length) finishQuiz();
-    else renderQuizQuestion();
-  }
-
-  function finishQuiz() {
-    stopQuizTimer();
-    var finished = quiz;
-    quiz = null;
-    var main = app.querySelector('.main');
-    if (!main) return;
-
-    if (finished.type === 'weak') {
-      var remaining = weakList().length;
-      lastWeakClear = remaining === 0;
-      main.innerHTML = '<section class="card result-card"><h2>' + (remaining === 0 ? 'Review CLEAR' : 'Review Finished') + '</h2><p>Score: ' + h(finished.score) + ' / ' + h(finished.order.length) + '</p>' +
-        (remaining === 0 ? '<p>Weak Wordsはすべて回収されました。</p>' : '<p>まだ ' + h(remaining) + ' 語残っています。もう一度潜って回収できます。</p>') +
-        '<button class="primary wide" data-action="mode" data-mode="weak">Weak Wordsへ戻る</button></section>';
-      bindEvents();
-      return;
-    }
-
-    clearMode(finished.mode === 'listening' ? 'listening' : 'quiz', finished.score, finished.order.length);
-  }
-
-  function clearMode(mode, score, total) {
-    var day = currentDay();
-    var wasCompleted = !!state.completed[day.id];
-    var oldLevel = sharkLevel();
-    if (!state.clears[day.id]) state.clears[day.id] = { listening: false, quiz: false, flashcard: false };
-    state.clears[day.id][mode] = true;
-    applyUnlockRules(state, data);
-    saveState();
-    var nowCompleted = !!state.completed[day.id];
-    if (!wasCompleted && nowCompleted) {
-      lastClearEvent = {
-        dayId: day.id,
-        area: seaAreaName(day),
-        oldLevel: oldLevel,
-        newLevel: sharkLevel(),
-        progress: progressPercent(),
-        unitProgress: unitProgressPercent(day),
-        sea: day.seaTitle || 'Learning Sea',
-        nextDay: data.days[currentDayIndex + 1] || null
-      };
-    }
-    currentMode = 'home';
-    render();
-  }
-
-  function moveCard(delta) {
-    var day = currentDay();
-    flashIndex = Math.max(0, Math.min(day.words.length - 1, flashIndex + delta));
-    flashFlipped = false;
-    render();
-  }
-
-  function nextDay() {
-    var next = data.days[currentDayIndex + 1];
-    if (!next || !state.unlocked[next.id]) return;
-    currentDayIndex += 1;
-    currentMode = 'home';
-    flashIndex = 0;
-    flashFlipped = false;
-    lastClearEvent = null;
-    render();
-  }
-
-  function resetProgress() {
-    if (!confirm('学習進行をリセットします。Weak Wordsは別管理なので残ります。')) return;
-    state = defaultState(data);
-    saveState();
-    currentDayIndex = 0;
-    currentMode = 'home';
-    flashIndex = 0;
-    flashFlipped = false;
-    quiz = null;
-    lastClearEvent = null;
-    render();
-  }
-
-  function makeChoices(correctWord, pool) {
-    var correct = correctWord.meaning;
-    var candidates = shuffle(pool.filter(function (w) {
-      return w && w.meaning && w.word !== correctWord.word && !tooSimilarMeaning(w.meaning, correct);
-    }));
-    var choices = [correct];
-    candidates.forEach(function (w) {
-      if (choices.length < 4 && choices.indexOf(w.meaning) === -1) choices.push(w.meaning);
-    });
-    if (choices.length < 4) {
-      shuffle(allWords()).forEach(function (w) {
-        if (choices.length < 4 && w.word !== correctWord.word && choices.indexOf(w.meaning) === -1 && !tooSimilarMeaning(w.meaning, correct)) choices.push(w.meaning);
+  function renderTopics() {
+    setSensei(SENSEI.home);
+    const html = topics.map((topic, i) => {
+      const items = getItemsByTopic(topic);
+      const known = getKnownCount(items);
+      const acc = topicAccuracy(topic);
+      return `
+        <button class="topic-card sea-bg-${i % 6}" data-topic="${escapeHTML(topic)}" type="button">
+          <h3>${escapeHTML(topic)}</h3>
+          <p>収録語数：${items.length}語</p>
+          <p>学習済み：${known}語</p>
+          <p>正答率：${acc}%</p>
+          <div class="progress-bar"><div class="progress-fill" style="width:${percent(known, items.length)}%"></div></div>
+        </button>
+      `;
+    }).join("");
+    safeHTML("topicList", html);
+    const list = $("topicList");
+    if (list) {
+      list.querySelectorAll(".topic-card").forEach((btn) => {
+        btn.addEventListener("click", () => selectTopic(btn.getAttribute("data-topic")));
       });
     }
-    if (choices.length < 4) {
-      shuffle(allWords()).forEach(function (w) {
-        if (choices.length < 4 && choices.indexOf(w.meaning) === -1) choices.push(w.meaning);
-      });
+  }
+
+  function selectTopic(topic) {
+    currentTopic = topic;
+    currentItems = getItemsByTopic(topic);
+    currentIndex = 0;
+    setSeaBackground(topic);
+    safeText("selectedTopicTitle", topic);
+    safeText("selectedTopicMeta", `${currentItems.length}語 / 学習済み ${getKnownCount(currentItems)}語`);
+    showScreen("modeScreen");
+  }
+
+  function renderFlashcard() {
+    if (!currentItems.length) {
+      showError("このTopicには単語がありません。");
+      return;
     }
-    return shuffle(choices.slice(0, 4));
+    currentIndex = Math.max(0, Math.min(currentIndex, currentItems.length - 1));
+    const item = currentItems[currentIndex];
+    const card = $("flashcard");
+    if (card) card.classList.toggle("flipped", isFlipped);
+    safeText("flashCounter", `${currentIndex + 1} / ${currentItems.length}`);
+    safeText("cardWord", item.word);
+    safeText("cardPos", item.pos);
+    safeText("cardMeaning", item.meaning);
+    safeText("cardDerivatives", item.derivatives);
+    safeText("cardExample", item.example);
+    safeText("cardExampleJa", item.exampleJa);
   }
 
-  function tooSimilarMeaning(a, b) {
-    var aa = normalizeMeaning(a);
-    var bb = normalizeMeaning(b);
-    if (!aa || !bb) return false;
-    if (aa === bb) return true;
-    if (aa.indexOf(bb) >= 0 || bb.indexOf(aa) >= 0) return true;
-    var pa = aa.split(/[／/、・\s]+/).filter(Boolean);
-    var pb = bb.split(/[／/、・\s]+/).filter(Boolean);
-    for (var i = 0; i < pa.length; i++) {
-      for (var j = 0; j < pb.length; j++) {
-        if (pa[i].length >= 2 && pa[i] === pb[j]) return true;
-      }
+  function toggleCard() {
+    isFlipped = !isFlipped;
+    renderFlashcard();
+  }
+
+  function markCard(kind) {
+    const item = currentItems[currentIndex];
+    if (!item) return;
+    if (kind === "known") {
+      state.known[item.id] = true;
+      delete state.unsure[item.id];
+      setSensei(SENSEI.clear);
+    } else {
+      state.unsure[item.id] = true;
+      delete state.known[item.id];
+      setSensei(SENSEI.wrong);
     }
-    return false;
-  }
-
-  function normalizeMeaning(s) {
-    return String(s || '').replace(/[（）()［］\[\]\s]/g, '').replace(/する$/g, '').trim();
-  }
-
-  function allWords() {
-    var out = [];
-    data.days.forEach(function (day) {
-      day.words.forEach(function (word) { out.push(word); });
-    });
-    return out;
+    saveState();
+    renderFlashcard();
   }
 
   function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
   }
 
-  function speak(word) {
-    if (!word || !('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(word);
-      u.lang = 'en-US';
-      u.rate = 0.88;
-      window.speechSynthesis.speak(u);
-    } catch (e) {
-      console.warn('speech synthesis failed', e);
+  function uniqueByMeaning(items) {
+    const seen = new Set();
+    const out = [];
+    for (const item of items) {
+      const key = String(item.meaning || "").trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+    }
+    return out;
+  }
+
+  function makeOptions(correctItem, poolItems) {
+    const correctMeaning = String(correctItem.meaning || "");
+    const topicPool = uniqueByMeaning(poolItems).filter((x) => x.id !== correctItem.id && x.meaning !== correctMeaning);
+    const allPool = uniqueByMeaning(vocab).filter((x) => x.id !== correctItem.id && x.meaning !== correctMeaning);
+    const selected = [];
+    const addFrom = (pool) => {
+      for (const item of shuffle(pool)) {
+        if (selected.length >= 3) break;
+        if (selected.some((x) => x.meaning === item.meaning)) continue;
+        selected.push(item);
+      }
+    };
+    addFrom(topicPool);
+    if (selected.length < 3) addFrom(allPool);
+    const options = [correctMeaning].concat(selected.map((x) => x.meaning));
+    return shuffle(Array.from(new Set(options))).slice(0, Math.min(4, options.length));
+  }
+
+  function startQuiz(items, mode) {
+    quizMode = mode || "quiz";
+    quizItems = shuffle(items && items.length ? items : vocab);
+    quizIndex = 0;
+    if (!quizItems.length) {
+      showError("出題できる単語がありません。");
+      return;
+    }
+    if (quizMode === "listening") {
+      showScreen("listeningScreen");
+      renderListeningQuestion();
+    } else {
+      showScreen("quizScreen");
+      renderQuizQuestion();
     }
   }
 
-
-  /* =========================
-     Concept Discovery UX
-  ========================= */
-
-  function getConceptLinks(word) {
-    var graph = conceptGraph();
-    return graph[String(word || '').toLowerCase()] || inferConceptLinks(word);
+  function renderQuizQuestion() {
+    quizCurrent = quizItems[quizIndex % quizItems.length];
+    const pool = currentTopic ? getItemsByTopic(currentTopic) : vocab;
+    safeText("quizTitle", currentTopic ? `${currentTopic}：英語→日本語4択` : "総復習：英語→日本語4択");
+    safeText("quizCounter", `${quizIndex + 1}問目`);
+    safeText("quizWord", quizCurrent.word);
+    safeText("quizPos", quizCurrent.pos);
+    safeText("quizFeedback", "");
+    const next = $("nextQuizBtn");
+    if (next) next.classList.add("hidden");
+    renderOptions("quizOptions", makeOptions(quizCurrent, pool), quizCurrent.meaning, handleQuizAnswer);
   }
 
-  function conceptGraph() {
-    return {
-      perception: ['interpretation', 'cognition', 'representation'],
-      represent: ['representation', 'symbol', 'language'],
-      representation: ['abstraction', 'language', 'metaphor'],
-      interpret: ['interpretation', 'context', 'meaning'],
-      interpretation: ['evidence', 'perspective', 'reflection'],
-      assumption: ['bias', 'framework', 'perspective'],
-      framework: ['model', 'structure', 'system'],
-      evidence: ['infer', 'claim', 'evaluate'],
-      infer: ['evidence', 'indicate', 'interpretation'],
-      indicate: ['sign', 'signal', 'evidence'],
-      distinguish: ['distinction', 'category', 'classification'],
-      context: ['meaning', 'discourse', 'interpretation'],
-      concept: ['abstraction', 'category', 'model'],
-      category: ['classification', 'distinction', 'concept'],
-      structure: ['framework', 'system', 'relation'],
-      model: ['framework', 'abstraction', 'mechanism'],
-      abstract: ['abstraction', 'concept', 'concrete'],
-      bias: ['assumption', 'perspective', 'prejudice'],
-      stereotype: ['bias', 'category', 'representation'],
-      prejudice: ['bias', 'assumption', 'perspective'],
-      perspective: ['viewpoint', 'interpretation', 'bias'],
-      expectation: ['assumption', 'perception', 'tendency'],
-      tendency: ['pattern', 'bias', 'generalize'],
-      abstraction: ['concept', 'model', 'classification'],
-      classification: ['category', 'distinction', 'system'],
-      classify: ['classification', 'category', 'feature'],
-      generalize: ['abstraction', 'category', 'assumption'],
-      distinction: ['distinguish', 'category', 'contrast'],
-      feature: ['category', 'model', 'evidence'],
-      system: ['structure', 'component', 'relation'],
-      mechanism: ['system', 'structure', 'explanation'],
-      component: ['system', 'structure', 'relation'],
-      relation: ['network', 'meaning', 'structure'],
-      metacognition: ['reflection', 'awareness', 'monitor'],
-      reflection: ['metacognition', 'revision', 'insight'],
-      awareness: ['bias', 'metacognition', 'monitor'],
-      monitor: ['awareness', 'evaluate', 'metacognition'],
-      evaluate: ['evidence', 'claim', 'judgment'],
-      insight: ['interpretation', 'reflection', 'revision'],
-      revision: ['reflection', 'evaluate', 'interpretation'],
-      language: ['symbol', 'meaning', 'communication'],
-      symbol: ['sign', 'code', 'representation'],
-      sign: ['symbol', 'signal', 'reference'],
-      signal: ['sign', 'communication', 'message'],
-      code: ['symbol', 'system', 'meaning'],
-      refer: ['reference', 'meaning', 'sign'],
-      reference: ['refer', 'context', 'meaning'],
-      communication: ['sender', 'receiver', 'interaction'],
-      expression: ['message', 'tone', 'communication'],
-      message: ['sender', 'receiver', 'tone'],
-      sender: ['message', 'audience', 'communication'],
-      receiver: ['message', 'interpretation', 'communication'],
-      interaction: ['communication', 'discourse', 'relation'],
-      interpretive: ['interpretation', 'reading', 'context'],
-      narrative: ['sequence', 'viewpoint', 'discourse'],
-      discourse: ['context', 'narrative', 'media'],
-      utterance: ['context', 'expression', 'meaning'],
-      contextual: ['context', 'meaning', 'discourse'],
-      sequence: ['narrative', 'coherence', 'structure'],
-      coherence: ['sequence', 'structure', 'meaning'],
-      viewpoint: ['perspective', 'narrative', 'interpretation'],
-      rhetoric: ['persuasion', 'claim', 'tone'],
-      persuasion: ['claim', 'appeal', 'evidence'],
-      implication: ['meaning', 'claim', 'context'],
-      claim: ['evidence', 'persuasion', 'evaluate'],
-      appeal: ['persuasion', 'audience', 'tone'],
-      emphasis: ['tone', 'message', 'rhetoric'],
-      tone: ['expression', 'attitude', 'rhetoric'],
-      translation: ['meaning', 'equivalent', 'nuance'],
-      meaning: ['language', 'context', 'interpretation'],
-      ambiguity: ['meaning', 'context', 'interpretation'],
-      equivalent: ['translation', 'meaning', 'nuance'],
-      nuance: ['connotation', 'tone', 'translation'],
-      literal: ['meaning', 'translation', 'connotation'],
-      connotation: ['nuance', 'implication', 'meaning'],
-      metaphor: ['representation', 'analogy', 'domain'],
-      abstractive: ['abstraction', 'language', 'representation'],
-      image: ['representation', 'metaphor', 'concrete'],
-      analogy: ['metaphor', 'relation', 'model'],
-      domain: ['metaphor', 'concept', 'framework'],
-      concrete: ['abstract', 'example', 'image'],
-      media: ['information', 'platform', 'network'],
-      information: ['media', 'knowledge', 'interpretation'],
-      transmit: ['communication', 'network', 'message'],
-      circulate: ['network', 'media', 'information'],
-      audience: ['receiver', 'rhetoric', 'media'],
-      platform: ['media', 'network', 'discourse'],
-      network: ['relation', 'media', 'system'],
-      literacy: ['media', 'interpretation', 'evaluate']
-    };
+  function renderListeningQuestion() {
+    quizCurrent = quizItems[quizIndex % quizItems.length];
+    const pool = currentTopic ? getItemsByTopic(currentTopic) : vocab;
+    safeText("listeningTitle", currentTopic ? `${currentTopic}：Listening` : "総復習：Listening");
+    safeText("listeningCounter", `${quizIndex + 1}問目`);
+    safeText("listeningFeedback", "");
+    const next = $("nextListeningBtn");
+    if (next) next.classList.add("hidden");
+    renderOptions("listeningOptions", makeOptions(quizCurrent, pool), quizCurrent.meaning, handleListeningAnswer);
+    setTimeout(() => speakWord(quizCurrent.word), 250);
   }
 
-  function inferConceptLinks(word) {
-    var text = String(word || '').toLowerCase();
-    if (!text) return [];
-    if (text.indexOf('tion') >= 0) return ['concept', 'relation', 'framework'];
-    if (text.indexOf('meta') === 0) return ['reflection', 'awareness', 'cognition'];
-    if (text.indexOf('trans') === 0) return ['movement', 'communication', 'transition'];
-    return [];
-  }
-
-  function randomArchiveMessage() {
-    var items = [
-      'Narrative Trench illuminated',
-      'Cognition Abyss discovered',
-      'Semantic Reef connected',
-      'Interpretation Current awakened',
-      'Symbolic Depths mapped'
-    ];
-    return items[Math.floor(Math.random() * items.length)];
-  }
-
-  function renderDiscoveryOverlay(word) {
-    var existing = document.querySelector('.discovery-overlay');
-    if (existing) existing.remove();
-
-    var links = getConceptLinks(word.word);
-    if (!links.length) return;
-
-    var overlay = document.createElement('div');
-    overlay.className = 'discovery-overlay';
-
-    overlay.innerHTML =
-      '<div class="overlay-glow"></div>' +
-      '<div class="overlay-content">' +
-      '<div class="overlay-title">New Connection Found</div>' +
-      '<div class="overlay-main">' + h(word.word) + ' ↔ ' + h(links[0]) + '</div>' +
-      '<div class="overlay-sub">' + h(randomArchiveMessage()) + '</div>' +
-      '</div>';
-
-    document.body.appendChild(overlay);
-
-    setTimeout(function () {
-      overlay.classList.add('show');
-    }, 30);
-
-    setTimeout(function () {
-      overlay.classList.remove('show');
-      setTimeout(function () {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-      }, 700);
-    }, 2600);
-  }
-
-  function connectedConceptsHtml(word) {
-    if (!word) return '';
-    var links = getConceptLinks(word.word);
-    if (!links.length) return '';
-
-    return '<section class="concept-panel">' +
-      '<div class="concept-title">Connected Concepts</div>' +
-      '<div class="concept-links">' +
-      '<span class="concept-core">' + h(word.word) + '</span>' +
-      links.map(function (l) {
-        return '<span class="concept-node">↔ ' + h(l) + '</span>';
-      }).join('') +
-      '</div></section>';
-  }
-
-  function knowledgeGraphHtml(word) {
-    if (!word) return '';
-
-    var graphs = {
-      perception: ['perception', 'cognition', 'representation'],
-      representation: ['representation', 'abstraction', 'language'],
-      language: ['language', 'symbol', 'communication'],
-      metaphor: ['metaphor', 'representation', 'meaning'],
-      bias: ['bias', 'perspective', 'interpretation']
-    };
-
-    var path = graphs[String(word.word || '').toLowerCase()];
-    if (!path) return '';
-
-    return '<section class="knowledge-graph">' +
-      '<div class="concept-title">Knowledge Graph</div>' +
-      '<div class="graph-column">' +
-      path.map(function (p, i) {
-        return '<div class="graph-node">' +
-          h(p) +
-          (i < path.length - 1 ? '<div class="graph-arrow">↓</div>' : '') +
-          '</div>';
-      }).join('') +
-      '</div></section>';
-  }
-
-  function conceptNavigationHtml(word) {
-    if (!word) return '';
-    var links = getConceptLinks(word.word).slice(0, 3);
-    var nextWord = nextConceptWord(word.word);
-    var currentPath = conceptPathForWord(word.word);
-    var currentQuestion = reflectionQuestionForWord(word.word);
-    if (!links.length && !nextWord) return '';
-
-    return '<section class="concept-navigation" aria-label="Concept Navigation">' +
-      '<div class="nav-current"><div><div class="eyebrow">Concept Navigation</div><h3>Knowledge Currents</h3><p>' + h(flowSentence(word.word, links)) + '</p></div><span class="current-orb">' + h(word.word) + '</span></div>' +
-      '<div class="concept-paths">' + conceptPathHtml(currentPath) + '</div>' +
-      '<div class="dive-deeper"><div class="concept-title">Dive Deeper</div><div class="dive-list">' +
-      links.map(function (link) { return conceptDiveButtonHtml(link); }).join('') +
-      (nextWord ? conceptDiveButtonHtml(nextWord.word, 'Next in this sea') : '') +
-      '</div></div>' +
-      '<div class="reflection-layer"><span>Reflection</span><p>' + h(currentQuestion) + '</p></div>' +
-      '</section>';
-  }
-
-  function conceptDiveButtonHtml(concept, label) {
-    var target = findWordLocation(concept);
-    var cls = target ? 'reachable' : 'ghost-current';
-    var note = label || (target ? 'Open concept' : 'Related current');
-    return '<button class="dive-chip ' + h(cls) + '" data-action="navigateConcept" data-concept="' + h(concept) + '" ' + (target ? '' : 'aria-disabled="true"') + '><small>' + h(note) + '</small><strong>→ ' + h(concept) + '</strong></button>';
-  }
-
-  function conceptPathHtml(path) {
-    var labels = ['Perception Path', 'Language Path', 'Identity Path'];
-    return labels.map(function (label) {
-      return '<span class="path-pill ' + (label === path ? 'active' : '') + '">' + h(label) + '</span>';
-    }).join('');
-  }
-
-  function conceptPathForWord(word) {
-    var day = currentDay();
-    var key = String(word || '').toLowerCase();
-    if (day && day.unitId === 'unit2') return 'Language Path';
-    if (['bias', 'prejudice', 'stereotype', 'perspective', 'viewpoint', 'audience', 'discourse'].indexOf(key) >= 0) return 'Identity Path';
-    return 'Perception Path';
-  }
-
-  function reflectionQuestionForWord(word) {
-    var key = String(word || '').toLowerCase();
-    var questions = {
-      perception: 'Do we see reality itself, or do we interpret signs through memory and language?',
-      language: 'How does language shape what we are able to notice?',
-      bias: 'What hidden assumption might change the way evidence is selected?',
-      framework: 'What becomes visible only after we change the framework?',
-      context: 'How does context change the meaning of the same word?',
-      metaphor: 'What abstract idea becomes visible through this metaphor?',
-      rhetoric: 'How does this wording guide the reader’s judgment?',
-      media: 'How does the medium change the movement of information?',
-      translation: 'What is gained or lost when meaning crosses languages?',
-      representation: 'What is present in the representation, and what is left outside it?'
-    };
-    return questions[key] || 'How does this concept connect to the way we read, judge, and understand the world?';
-  }
-
-  function flowSentence(word, links) {
-    if (!links || !links.length) return 'This concept is drifting toward the next abstract domain.';
-    return word + ' flows toward ' + links.slice(0, 2).join(' and ') + ', forming a route through the deep conceptual sea.';
-  }
-
-  function nextConceptWord(currentWord) {
-    var day = currentDay();
-    if (!day || !Array.isArray(day.words) || !day.words.length) return null;
-    var key = String(currentWord || '').toLowerCase();
-    for (var i = 0; i < day.words.length; i++) {
-      if (String(day.words[i].word || '').toLowerCase() === key) return day.words[(i + 1) % day.words.length];
+  function renderOptions(containerId, options, correctMeaning, handler) {
+    const box = $(containerId);
+    if (!box) return;
+    box.innerHTML = "";
+    if (!options.length) {
+      box.innerHTML = "<p>選択肢を作成できませんでした。</p>";
+      return;
     }
-    return day.words[0];
-  }
-
-  function findWordLocation(concept) {
-    var key = String(concept || '').toLowerCase();
-    if (!key) return null;
-    var exact = null;
-    var related = null;
-    data.days.forEach(function (day, dayIndex) {
-      day.words.forEach(function (word, wordIndex) {
-        var w = String(word.word || '').toLowerCase();
-        if (w === key && !exact) exact = { dayIndex: dayIndex, wordIndex: wordIndex, word: word };
-        if (!related && (w.indexOf(key) >= 0 || key.indexOf(w) >= 0)) related = { dayIndex: dayIndex, wordIndex: wordIndex, word: word };
-      });
+    options.forEach((meaning) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "option-btn";
+      btn.textContent = meaning;
+      btn.addEventListener("click", () => handler(btn, meaning, correctMeaning));
+      box.appendChild(btn);
     });
-    return exact || related;
   }
 
-  function navigateToConcept(concept) {
-    var target = findWordLocation(concept);
-    if (!target) {
-      renderNavigationPulse(concept);
-      return;
+  function lockOptions(containerId, chosenBtn, chosenMeaning, correctMeaning) {
+    const box = $(containerId);
+    if (!box) return;
+    Array.from(box.querySelectorAll("button")).forEach((btn) => {
+      btn.disabled = true;
+      if (btn.textContent === correctMeaning) btn.classList.add("correct");
+    });
+    if (chosenMeaning !== correctMeaning && chosenBtn) chosenBtn.classList.add("wrong");
+  }
+
+  function handleQuizAnswer(btn, meaning, correctMeaning) {
+    const ok = meaning === correctMeaning;
+    state.quiz.total += 1;
+    if (ok) state.quiz.correct += 1;
+    saveState();
+    lockOptions("quizOptions", btn, meaning, correctMeaning);
+    const fb = $("quizFeedback");
+    if (fb) {
+      fb.textContent = ok ? "正解！" : `不正解。正解：${correctMeaning}`;
+      fb.className = "feedback " + (ok ? "ok" : "bad");
     }
-    var day = data.days[target.dayIndex];
-    if (!day || !state.unlocked[day.id]) {
-      renderNavigationPulse(concept + ' is in a deeper locked current');
-      return;
+    if (ok) {
+      setSensei(SENSEI.correct);
+      playSuccessSound();
+    } else {
+      setSensei(SENSEI.wrong);
+      if (quizCurrent) {
+        state.unsure[quizCurrent.id] = true;
+        delete state.known[quizCurrent.id];
+        saveState();
+      }
     }
-    currentDayIndex = target.dayIndex;
-    currentMode = 'flashcard';
-    flashIndex = target.wordIndex;
-    flashFlipped = false;
-    stopQuizTimer();
-    quiz = null;
-    lastClearEvent = null;
-    render();
-    renderNavigationPulse('Diving to ' + target.word.word);
+    const next = $("nextQuizBtn");
+    if (next) next.classList.remove("hidden");
   }
 
-  function renderNavigationPulse(message) {
-    var existing = document.querySelector('.navigation-pulse');
-    if (existing) existing.remove();
-    var pulse = document.createElement('div');
-    pulse.className = 'navigation-pulse';
-    pulse.innerHTML = '<span>↯</span><strong>' + h(message) + '</strong>';
-    document.body.appendChild(pulse);
-    setTimeout(function () { pulse.classList.add('show'); }, 30);
-    setTimeout(function () {
-      pulse.classList.remove('show');
-      setTimeout(function () { if (pulse.parentNode) pulse.parentNode.removeChild(pulse); }, 500);
-    }, 1600);
+  function handleListeningAnswer(btn, meaning, correctMeaning) {
+    const ok = meaning === correctMeaning;
+    state.listening.total += 1;
+    if (ok) state.listening.correct += 1;
+    saveState();
+    lockOptions("listeningOptions", btn, meaning, correctMeaning);
+    const fb = $("listeningFeedback");
+    if (fb) {
+      fb.textContent = ok ? "正解！" : `不正解。正解：${correctMeaning}`;
+      fb.className = "feedback " + (ok ? "ok" : "bad");
+    }
+    if (ok) {
+      setSensei(SENSEI.correct);
+      playSuccessSound();
+    } else {
+      setSensei(SENSEI.wrong);
+      if (quizCurrent) {
+        state.unsure[quizCurrent.id] = true;
+        delete state.known[quizCurrent.id];
+        saveState();
+      }
+    }
+    const next = $("nextListeningBtn");
+    if (next) next.classList.remove("hidden");
   }
 
-  function renderErrorNotice(message) {
-    if (!app) return;
-    app.innerHTML = '<main class="main"><section class="card"><h1>起動エラー</h1><p>' + h(message) + '</p></section></main>';
+  function nextQuestion(mode) {
+    quizIndex += 1;
+    if (mode === "listening") renderListeningQuestion();
+    else renderQuizQuestion();
   }
-})();
+
+  function renderReview() {
+    const select = $("reviewTopicSelect");
+    if (!select) return;
+    select.innerHTML = "";
+    const all = document.createElement("option");
+    all.value = "__ALL__";
+    all.textContent = "Topicランダムの総復習";
+    select.appendChild(all);
+    topics.forEach((topic) => {
+      const opt = document.createElement("option");
+      opt.value = topic;
+      opt.textContent = topic;
+      select.appendChild(opt);
+    });
+  }
+
+  function getReviewItems() {
+    const select = $("reviewTopicSelect");
+    const value = select ? select.value : "__ALL__";
+    currentTopic = value === "__ALL__" ? "" : value;
+    setSeaBackground(currentTopic);
+    return value === "__ALL__" ? vocab : getItemsByTopic(value);
+  }
+
+  function renderProgress() {
+    const known = getKnownCount(vocab);
+    const unsure = getUnsureCount(vocab);
+    safeHTML("progressStats", `
+      <div class="stat"><span>全体進捗</span><b>${percent(known, vocab.length)}%</b></div>
+      <div class="stat"><span>総単語数</span><b>${vocab.length}</b></div>
+      <div class="stat"><span>覚えた単語数</span><b>${known}</b></div>
+      <div class="stat"><span>まだ不安な単語数</span><b>${unsure}</b></div>
+      <div class="stat"><span>4択</span><b>${state.quiz.correct}/${state.quiz.total}</b><small>${accuracy(state.quiz)}%</small></div>
+      <div class="stat"><span>Listening</span><b>${state.listening.correct}/${state.listening.total}</b><small>${accuracy(state.listening)}%</small></div>
+    `);
+    const html = topics.map((topic) => {
+      const items = getItemsByTopic(topic);
+      const k = getKnownCount(items);
+      const u = getUnsureCount(items);
+      return `
+        <div class="progress-topic-card">
+          <h3>${escapeHTML(topic)}</h3>
+          <p>${items.length}語 / 覚えた ${k}語 / まだ不安 ${u}語</p>
+          <div class="progress-bar"><div class="progress-fill" style="width:${percent(k, items.length)}%"></div></div>
+        </div>
+      `;
+    }).join("");
+    safeHTML("progressTopics", html);
+  }
+
+  function bindEvents() {
+    const bind = (id, fn) => {
+      const el = $(id);
+      if (el) el.addEventListener("click", fn);
+    };
+
+    bind("homeBtn", () => { renderHome(); showScreen("homeScreen"); });
+    bind("progressBtn", () => { renderProgress(); showScreen("progressScreen"); });
+    bind("startTopicsBtn", () => { renderTopics(); showScreen("topicScreen"); });
+    bind("startReviewBtn", () => { renderReview(); showScreen("reviewScreen"); });
+
+    bind("navHome", () => { renderHome(); showScreen("homeScreen"); });
+    bind("navTopics", () => { renderTopics(); showScreen("topicScreen"); });
+    bind("navReview", () => { renderReview(); showScreen("reviewScreen"); });
+    bind("navProgress", () => { renderProgress(); showScreen("progressScreen"); });
+
+    bind("backToTopicsBtn", () => { renderTopics(); showScreen("topicScreen"); });
+    bind("backFromFlashBtn", () => showScreen("modeScreen"));
+    bind("backFromQuizBtn", () => currentTopic ? showScreen("modeScreen") : showScreen("reviewScreen"));
+    bind("backFromListeningBtn", () => currentTopic ? showScreen("modeScreen") : showScreen("reviewScreen"));
+    bind("backFromReviewBtn", () => { renderHome(); showScreen("homeScreen"); });
+
+    bind("flashcardModeBtn", () => {
+      isFlipped = false;
+      currentItems = getItemsByTopic(currentTopic);
+      currentIndex = 0;
+      renderFlashcard();
+      showScreen("flashcardScreen");
+    });
+    bind("quizModeBtn", () => startQuiz(getItemsByTopic(currentTopic), "quiz"));
+    bind("listeningModeBtn", () => startQuiz(getItemsByTopic(currentTopic), "listening"));
+    bind("topicReviewModeBtn", () => {
+      renderReview();
+      const select = $("reviewTopicSelect");
+      if (select) select.value = currentTopic;
+      showScreen("reviewScreen");
+    });
+
+    bind("flashcard", toggleCard);
+    bind("flipCardBtn", toggleCard);
+    bind("cardSpeakBtn", (e) => {
+      e.stopPropagation();
+      const item = currentItems[currentIndex];
+      if (item) speakWord(item.word);
+    });
+    bind("prevCardBtn", () => {
+      currentIndex = (currentIndex - 1 + currentItems.length) % currentItems.length;
+      isFlipped = false;
+      renderFlashcard();
+    });
+    bind("nextCardBtn", () => {
+      currentIndex = (currentIndex + 1) % currentItems.length;
+      isFlipped = false;
+      renderFlashcard();
+    });
+    bind("markKnownBtn", () => markCard("known"));
+    bind("markUnsureBtn", () => markCard("unsure"));
+
+    bind("nextQuizBtn", () => nextQuestion("quiz"));
+    bind("nextListeningBtn", () => nextQuestion("listening"));
+    bind("replayListeningBtn", () => {
+      if (quizCurrent) speakWord(quizCurrent.word);
+    });
+    bind("reviewQuizBtn", () => startQuiz(getReviewItems(), "quiz"));
+    bind("reviewListeningBtn", () => startQuiz(getReviewItems(), "listening"));
+
+    bind("resetProgressBtn", () => {
+      if (!confirm("学習記録をすべてリセットしますか？")) return;
+      state.known = {};
+      state.unsure = {};
+      state.quiz = { correct: 0, total: 0 };
+      state.listening = { correct: 0, total: 0 };
+      saveState();
+      renderProgress();
+      renderHome();
+      setSensei(SENSEI.home);
+    });
+
+    const flash = $("flashcard");
+    if (flash) {
+      flash.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleCard();
+        }
+      });
+    }
+  }
+
+  function normalizeItems(items) {
+    return items.map((x, i) => ({
+      id: Number.isFinite(Number(x.id)) ? Number(x.id) : i + 1,
+      word: x.word == null ? "" : String(x.word),
+      pos: x.pos == null ? "" : String(x.pos),
+      meaning: x.meaning == null ? "" : String(x.meaning),
+      derivatives: x.derivatives == null ? "" : String(x.derivatives),
+      topic: x.topic == null || String(x.topic).trim() === "" ? "未分類" : String(x.topic),
+      example: x.example == null ? "" : String(x.example),
+      exampleJa: x.exampleJa == null ? "" : String(x.exampleJa)
+    })).filter((x) => x.word && x.meaning);
+  }
+
+  async function init() {
+    bindEvents();
+    try {
+      const res = await fetch("vocabulary.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`vocabulary.jsonを読み込めませんでした。HTTP ${res.status}`);
+      const json = await res.json();
+      if (!Array.isArray(json)) throw new Error("vocabulary.jsonの形式が配列ではありません。");
+      vocab = normalizeItems(json);
+      if (!vocab.length) throw new Error("vocabulary.jsonに有効な単語データがありません。");
+      groupByTopic();
+      renderHome();
+      renderTopics();
+      renderReview();
+      showScreen("homeScreen");
+    } catch (e) {
+      showError(e.message || "vocabulary.jsonの読み込みに失敗しました。");
+    }
+  }
+
+  init();
+});

@@ -1,15 +1,176 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Academic Vocabulary Network Adventure</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Academic Vocabulary Network 東大編</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app" class="app-shell">
-    <noscript>このアプリを使うにはJavaScriptを有効にしてください。</noscript>
+  <div id="appShell" class="app-shell sea-bg-0">
+    <header class="app-header">
+      <button id="homeBtn" class="ghost-btn" type="button">Home</button>
+      <div class="title-block">
+        <h1>Academic Vocabulary Network 東大編</h1>
+        <p>知性の海を探検する英単語アプリ</p>
+      </div>
+      <button id="progressBtn" class="ghost-btn" type="button">Progress</button>
+    </header>
+
+    <section class="sensei-panel">
+      <div class="shark-sensei" aria-label="かわいいサメの先生">
+        <div class="shark-body">
+          <span class="fin top"></span>
+          <span class="fin side"></span>
+          <span class="tail"></span>
+          <span class="eye left"></span>
+          <span class="eye right"></span>
+          <span class="glasses"></span>
+          <span class="smile"></span>
+          <span class="tie"></span>
+        </div>
+      </div>
+      <div class="speech-bubble" id="senseiComment">今日も知性の海を探検しよう！</div>
+    </section>
+
+    <main id="mainContent" class="main-content">
+      <div id="errorBox" class="error-box hidden"></div>
+
+      <section id="homeScreen" class="screen active">
+        <div class="hero-card">
+          <h2>知性の海へようこそ</h2>
+          <p>Excel収録語だけを使い、Topicごとにフラッシュカード・4択・Listeningで確認します。</p>
+          <div class="home-stats" id="homeStats"></div>
+          <div class="button-row">
+            <button id="startTopicsBtn" class="primary-btn" type="button">Topicを選ぶ</button>
+            <button id="startReviewBtn" class="secondary-btn" type="button">一気に復習</button>
+          </div>
+        </div>
+        <div id="homeTopicSummary" class="topic-summary"></div>
+      </section>
+
+      <section id="topicScreen" class="screen">
+        <div class="screen-head">
+          <h2>Topic選択</h2>
+          <p>テーマTagごとに学習します。</p>
+        </div>
+        <div id="topicList" class="topic-grid"></div>
+      </section>
+
+      <section id="modeScreen" class="screen">
+        <div class="screen-head">
+          <button id="backToTopicsBtn" class="ghost-btn" type="button">← Topicへ</button>
+          <h2 id="selectedTopicTitle">Topic</h2>
+          <p id="selectedTopicMeta"></p>
+        </div>
+        <div class="mode-grid">
+          <button id="flashcardModeBtn" class="mode-card" type="button">Flashcard<br><span>単語を確認</span></button>
+          <button id="quizModeBtn" class="mode-card" type="button">英語→日本語4択<br><span>意味アクセス確認</span></button>
+          <button id="listeningModeBtn" class="mode-card" type="button">Listening<br><span>音声→意味確認</span></button>
+          <button id="topicReviewModeBtn" class="mode-card" type="button">Topic復習<br><span>ランダム出題</span></button>
+        </div>
+      </section>
+
+      <section id="flashcardScreen" class="screen">
+        <div class="screen-head">
+          <button id="backFromFlashBtn" class="ghost-btn" type="button">← 戻る</button>
+          <h2>Flashcard</h2>
+          <p id="flashCounter"></p>
+        </div>
+        <div id="flashcard" class="flashcard" tabindex="0" role="button" aria-label="カードを裏返す">
+          <div class="card-face card-front">
+            <p class="small-label">WORD</p>
+            <h3 id="cardWord"></h3>
+            <p id="cardPos" class="pos"></p>
+            <button id="cardSpeakBtn" class="small-btn" type="button">音声再生</button>
+            <p class="tap-hint">クリックして意味を見る</p>
+          </div>
+          <div class="card-face card-back">
+            <p class="small-label">MEANING</p>
+            <h3 id="cardMeaning"></h3>
+            <p id="cardDerivatives"></p>
+            <p id="cardExample" class="example-en"></p>
+            <p id="cardExampleJa" class="example-ja"></p>
+          </div>
+        </div>
+        <div class="button-row">
+          <button id="prevCardBtn" class="secondary-btn" type="button">前へ</button>
+          <button id="flipCardBtn" class="secondary-btn" type="button">裏返す</button>
+          <button id="nextCardBtn" class="secondary-btn" type="button">次へ</button>
+        </div>
+        <div class="button-row">
+          <button id="markKnownBtn" class="primary-btn" type="button">覚えた</button>
+          <button id="markUnsureBtn" class="warning-btn" type="button">まだ不安</button>
+        </div>
+      </section>
+
+      <section id="quizScreen" class="screen">
+        <div class="screen-head">
+          <button id="backFromQuizBtn" class="ghost-btn" type="button">← 戻る</button>
+          <h2 id="quizTitle">英語→日本語4択</h2>
+          <p id="quizCounter"></p>
+        </div>
+        <div class="quiz-card">
+          <p class="small-label">QUESTION</p>
+          <h3 id="quizWord"></h3>
+          <p id="quizPos" class="pos"></p>
+          <div id="quizOptions" class="options"></div>
+          <div id="quizFeedback" class="feedback"></div>
+          <button id="nextQuizBtn" class="primary-btn hidden" type="button">次の問題へ</button>
+        </div>
+      </section>
+
+      <section id="listeningScreen" class="screen">
+        <div class="screen-head">
+          <button id="backFromListeningBtn" class="ghost-btn" type="button">← 戻る</button>
+          <h2 id="listeningTitle">Listening</h2>
+          <p id="listeningCounter"></p>
+        </div>
+        <div class="quiz-card">
+          <p class="small-label">LISTEN</p>
+          <button id="replayListeningBtn" class="primary-btn" type="button">もう一度聞く</button>
+          <p class="listen-note">音声を聞いて日本語訳を選んでください。</p>
+          <div id="listeningOptions" class="options"></div>
+          <div id="listeningFeedback" class="feedback"></div>
+          <button id="nextListeningBtn" class="primary-btn hidden" type="button">次の問題へ</button>
+        </div>
+      </section>
+
+      <section id="reviewScreen" class="screen">
+        <div class="screen-head">
+          <button id="backFromReviewBtn" class="ghost-btn" type="button">← 戻る</button>
+          <h2>Review</h2>
+          <p>学習済み・未学習に関係なく出題できます。</p>
+        </div>
+        <div class="review-box">
+          <label for="reviewTopicSelect">復習範囲</label>
+          <select id="reviewTopicSelect"></select>
+          <div class="button-row">
+            <button id="reviewQuizBtn" class="primary-btn" type="button">英語→日本語4択で復習</button>
+            <button id="reviewListeningBtn" class="primary-btn" type="button">Listeningで復習</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="progressScreen" class="screen">
+        <div class="screen-head">
+          <h2>Progress</h2>
+          <p>到達度を確認できます。</p>
+        </div>
+        <div id="progressStats" class="progress-stats"></div>
+        <div id="progressTopics" class="progress-topics"></div>
+        <button id="resetProgressBtn" class="danger-btn" type="button">学習記録をリセット</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button id="navHome" type="button">Home</button>
+      <button id="navTopics" type="button">Topics</button>
+      <button id="navReview" type="button">Review</button>
+      <button id="navProgress" type="button">Progress</button>
+    </nav>
   </div>
+
   <script src="app.js"></script>
 </body>
 </html>
