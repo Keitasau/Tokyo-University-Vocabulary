@@ -616,22 +616,50 @@ document.addEventListener("DOMContentLoaded", () => {
     })).filter((x) => x.word && x.meaning);
   }
 
+  async function loadVocabularyData() {
+    let fetchError = null;
+    try {
+      const vocabUrl = new URL("vocabulary.json?v=fix2", window.location.href);
+      const res = await fetch(vocabUrl.href, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!Array.isArray(json)) throw new Error("vocabulary.jsonの形式が配列ではありません。");
+      return json;
+    } catch (e) {
+      fetchError = e;
+    }
+
+    // GitHub Pagesでは上のfetchで読み込みます。
+    // ローカルでindex.htmlを直接開いた場合は、ブラウザ制限でfetchが失敗するため、
+    // index.html内の埋め込みデータを安全な予備として読み込みます。
+    try {
+      const embedded = $("embeddedVocabulary");
+      if (embedded && embedded.textContent.trim()) {
+        const json = JSON.parse(embedded.textContent);
+        if (Array.isArray(json)) return json;
+      }
+    } catch (e) {
+      throw new Error("vocabulary.jsonの読み込みと埋め込み語彙データの読み込みに失敗しました。");
+    }
+
+    throw new Error((fetchError && fetchError.message) ? `vocabulary.jsonの読み込みに失敗しました: ${fetchError.message}。index.html / app.js / vocabulary.json が同じ階層にあるか、または古いapp.jsがキャッシュされていないか確認してください。` : "vocabulary.jsonの読み込みに失敗しました。");
+  }
+
   async function init() {
     bindEvents();
     try {
-      const res = await fetch("vocabulary.json", { cache: "no-store" });
-      if (!res.ok) throw new Error(`vocabulary.jsonを読み込めませんでした。HTTP ${res.status}`);
-      const json = await res.json();
-      if (!Array.isArray(json)) throw new Error("vocabulary.jsonの形式が配列ではありません。");
+      const json = await loadVocabularyData();
+      if (!Array.isArray(json)) throw new Error("語彙データの形式が配列ではありません。");
       vocab = normalizeItems(json);
-      if (!vocab.length) throw new Error("vocabulary.jsonに有効な単語データがありません。");
+      if (!vocab.length) throw new Error("語彙データに有効な単語データがありません。");
       groupByTopic();
       renderHome();
       renderTopics();
       renderReview();
+      clearError();
       showScreen("homeScreen");
     } catch (e) {
-      showError(e.message || "vocabulary.jsonの読み込みに失敗しました。");
+      showError(e.message || "語彙データの読み込みに失敗しました。");
     }
   }
 
