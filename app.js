@@ -456,18 +456,25 @@ const App = {
   startPhase(phase) {
     this.sessionMode = phase;
     this.sessionIndex = 0;
-    // sessionCorrect はセッション開始時のみリセット（フェーズ移行時はリセットしない）
 
     if (phase === 'flashcard') {
       this.setupFlashcard();
       this.showScreen('screen-flashcard');
     } else if (phase === 'quiz') {
+      this.sessionCorrect = 0; // クイズフェーズ開始時にリセット
       this.setupQuiz();
       this.showScreen('screen-quiz');
     } else if (phase === 'listening') {
       this.sessionMode = 'listening';
+      this.sessionCorrect = 0; // リスニングフェーズ開始時にリセット
       this.setupQuiz();
       this.showScreen('screen-quiz');
+      // 画面遷移完了後に1問目の音声を再生
+      setTimeout(() => {
+        if (this.sessionMode === 'listening' && this.quizCurrentWord) {
+          this.speak(this.quizCurrentWord.word);
+        }
+      }, 400);
     }
   },
 
@@ -631,7 +638,8 @@ const App = {
       }
     }, 1000);
 
-    if (this.sessionMode === 'listening') {
+    // リスニングモード: 2問目以降はここで音声再生（1問目はstartPhaseで処理）
+    if (this.sessionMode === 'listening' && this.sessionIndex > 0) {
       setTimeout(() => this.speak(w.word), 500);
     }
   },
@@ -873,15 +881,19 @@ const App = {
       : "Every mistake makes you stronger! 🦈";
     this.setText('results-comment', comments);
 
+    // フェーズ名ラベル
+    const phaseLabel = this.sessionMode === 'listening' ? 'リスニング'
+      : this.sessionMode === 'quiz' ? 'クイズ' : '';
+
     const statsEl = document.getElementById('results-stats');
     if (statsEl) {
       const mastered = Object.values(State.progress).filter(p => p.mastered).length;
       const weak = State.weakWords.size;
       statsEl.innerHTML = `
-        <div class="r-stat"><div class="r-stat-num">${pct}%</div><div class="r-stat-label">正答率</div></div>
+        <div class="r-stat"><div class="r-stat-num">${pct}%</div><div class="r-stat-label">${phaseLabel}正答率</div></div>
+        <div class="r-stat"><div class="r-stat-num">${correct}/${total}</div><div class="r-stat-label">${phaseLabel}正解数</div></div>
         <div class="r-stat"><div class="r-stat-num">${mastered}</div><div class="r-stat-label">習得済み</div></div>
         <div class="r-stat"><div class="r-stat-num">${weak}</div><div class="r-stat-label">Weak Words</div></div>
-        <div class="r-stat"><div class="r-stat-num">${total}</div><div class="r-stat-label">学習語数</div></div>
       `;
     }
 
